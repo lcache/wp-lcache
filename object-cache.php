@@ -284,12 +284,12 @@ class WP_Object_Cache {
 	var $cache_misses = 0;
 
 	/**
-	 * The amount of times a request was made to Redis
+	 * A count of calls made to APCu
 	 *
 	 * @access private
 	 * @var int
 	 */
-	var $redis_calls = array();
+	var $apcu_calls = array();
 
 	/**
 	 * List of global groups
@@ -316,33 +316,17 @@ class WP_Object_Cache {
 	var $blog_prefix;
 
 	/**
-	 * Whether or not Redis is connected
+	 * Whether or not APCu is available.
 	 *
 	 * @var bool
 	 * @access private
 	 */
-	var $is_redis_connected = false;
-
-	/**
-	 * Whether or not the object cache thinks Redis needs a flush
-	 *
-	 * @var bool
-	 * @access private
-	 */
-	var $do_redis_failback_flush = false;
+	var $is_apcu_available = false;
 
 	/**
 	 * The last triggered error
 	 */
 	var $last_triggered_error = '';
-
-	/**
-	 * Whether or not to use true cache groups, instead of flattening.
-	 *
-	 * @var bool
-	 * @access private
-	 */
-	const USE_GROUPS = WP_REDIS_USE_CACHE_GROUPS;
 
 	/**
 	 * Adds data to the cache if it doesn't already exist.
@@ -434,20 +418,11 @@ class WP_Object_Cache {
 			return $existing;
 		}
 
-		if ( self::USE_GROUPS ) {
-			$redis_safe_group = $this->_key( '', $group );
-			$result = $this->_call_redis( 'hIncrBy', $redis_safe_group, $key, -$offset, $group );
-			if ( $result < 0 ) {
-				$result = 0;
-				$this->_call_redis( 'hSet', $redis_safe_group, $key, $result );
-			}
-		} else {
-			$id = $this->_key( $key, $group );
-			$result = $this->_call_redis( 'decrBy', $id, $offset );
-			if ( $result < 0 ) {
-				$result = 0;
-				$this->_call_redis( 'set', $id, $result );
-			}
+		$id = $this->_key( $key, $group );
+		$result = $this->_call_apcu( 'apcu_dec', $id, $offset );
+		if ( $result < 0 ) {
+			$result = 0;
+			$this->_call_apcu( 'apcu_store', $id, $result );
 		}
 
 		if ( is_int( $result ) ) {
@@ -480,13 +455,8 @@ class WP_Object_Cache {
 		}
 
 		if ( $this->_should_persist( $group ) ) {
-			if ( self::USE_GROUPS ) {
-				$redis_safe_group = $this->_key( '', $group );
-				$result = $this->_call_redis( 'hDel', $redis_safe_group, $key );
-			} else {
-				$id = $this->_key( $key, $group );
-				$result = $this->_call_redis( 'del', $id );
-			}
+			$id = $this->_key( $key, $group );
+			$result = $this->_call_apcu( 'apcu_delete', $id );
 			if ( 1 !== $result ) {
 				return false;
 			}
@@ -497,46 +467,21 @@ class WP_Object_Cache {
 	}
 
 	/**
-	 * Remove the contents of all cache keys in the group.
-	 *
-	 * @param string $group Where the cache contents are grouped.
-	 * @return boolean True on success, false on failure.
-	 */
-	public function delete_group( $group ) {
-		if ( ! self::USE_GROUPS ) {
-			return false;
-		}
-
-		$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
-		$redis_safe_group = $this->_key( '', $group );
-		if ( $this->_should_persist( $group ) ) {
-			$result = $this->_call_redis( 'del', $redis_safe_group );
-			if ( 1 !== $result ) {
-				return false;
-			}
-		} else if ( ! $this->_should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
-			return false;
-		}
-		unset( $this->cache[ $multisite_safe_group ] );
-		return true;
-	}
-
-	/**
 	 * Clears the object cache of all data.
 	 *
-	 * By default, this will flush the session cache as well as Redis, but we
-	 * can leave the redis cache intact if we want. This is helpful when, for
+	 * By default, this will flush the session cache as well as APCu, but we
+	 * can leave the APCu cache intact if we want. This is helpful when, for
 	 * instance, you're running a batch process and want to clear the session
 	 * store to reduce the memory footprint, but you don't want to have to
 	 * re-fetch all the values from the database.
 	 *
-	 * @param  bool $redis Should we flush redis as well as the session cache?
+	 * @param  bool $apcu Should we flush APCu as well as the session cache?
 	 * @return bool Always returns true
 	 */
-	public function flush( $redis = true ) {
+	public function flush( $apcu = true ) {
 		$this->cache = array();
-		if ( $redis ) {
-			$this->_call_redis( 'flushAll' );
+		if ( $apcu ) {
+			$this->_call_apcu( 'apcu_delete' );
 		}
 
 		return true;
@@ -571,7 +516,7 @@ class WP_Object_Cache {
 			return $this->_get_internal( $key, $group );
 		}
 
-		// Not a persistent group, so don't try Redis if the value doesn't exist
+		// Not a persistent group, so don't try APCu if the value doesn't exist
 		// internally
 		if ( ! $this->_should_persist( $group ) ) {
 			$this->cache_misses += 1;
@@ -579,15 +524,10 @@ class WP_Object_Cache {
 			return false;
 		}
 
-		if ( self::USE_GROUPS ) {
-			$redis_safe_group = $this->_key( '', $group );
-			$value = $this->_call_redis( 'hGet', $redis_safe_group, $key );
-		} else {
-			$id = $this->_key( $key, $group );
-			$value = $this->_call_redis( 'get', $id );
-		}
+		$id = $this->_key( $key, $group );
+		$value = $this->_call_apcu( 'apcu_fetch', $id );
 
-		// PhpRedis returns `false` when the key doesn't exist
+		// APCu returns `false` when the key doesn't exist
 		if ( false === $value ) {
 			$this->cache_misses += 1;
 			$found = false;
@@ -641,20 +581,11 @@ class WP_Object_Cache {
 			return $existing;
 		}
 
-		if ( self::USE_GROUPS ) {
-			$redis_safe_group = $this->_key( '', $group );
-			$result = $this->_call_redis( 'hIncrBy', $redis_safe_group, $key, $offset, $group );
-			if ( $result < 0 ) {
-				$result = 0;
-				$this->_call_redis( 'hSet', $redis_safe_group, $key, $result );
-			}
-		} else {
-			$id = $this->_key( $key, $group );
-			$result = $this->_call_redis( 'incrBy', $id, $offset );
-			if ( $result < 0 ) {
-				$result = 0;
-				$this->_call_redis( 'set', $id, $result );
-			}
+		$id = $this->_key( $key, $group );
+		$result = $this->_call_apcu( 'apcu_inc', $id, $offset );
+		if ( $result < 0 ) {
+			$result = 0;
+			$this->_call_apcu( 'apcu_store', $id, $result );
 		}
 
 		if ( is_int( $result ) ) {
@@ -734,19 +665,8 @@ class WP_Object_Cache {
 			$data = serialize( $data );
 		}
 
-		// Redis doesn't support expire on hash group keys
-		if ( self::USE_GROUPS ) {
-			$redis_safe_group = $this->_key( '', $group );
-			$this->_call_redis( 'hSet', $redis_safe_group, $key, $data );
-			return true;
-		}
-
 		$id = $this->_key( $key, $group );
-		if ( empty( $expire ) ) {
-			$this->_call_redis( 'set', $id, $data );
-		} else {
-			$this->_call_redis( 'setex', $id, $expire, $data );
-		}
+		$this->_call_apcu( 'apcu_store', $id, $data, $expire );
 		return true;
 	}
 
@@ -757,16 +677,16 @@ class WP_Object_Cache {
 	 * key and the data.
 	 */
 	public function stats() {
-		$total_redis_calls = 0;
-		foreach ( $this->redis_calls as $method => $calls ) {
-			$total_redis_calls += $calls;
+		$total_apcu_calls = 0;
+		foreach ( $this->apcu_calls as $method => $calls ) {
+			$total_apcu_calls += $calls;
 		}
 		$out = array();
 		$out[] = '<p>';
 		$out[] = '<strong>Cache Hits:</strong>' . (int) $this->cache_hits . '<br />';
 		$out[] = '<strong>Cache Misses:</strong>' . (int) $this->cache_misses . '<br />';
-		$out[] = '<strong>Redis Calls:</strong>' . (int) $total_redis_calls . ':<br />';
-		foreach ( $this->redis_calls as $method => $calls ) {
+		$out[] = '<strong>APCu Calls:</strong>' . (int) $total_apcu_calls . ':<br />';
+		foreach ( $this->apcu_calls as $method => $calls ) {
 			$out[] = ' - ' . esc_html( $method ) . ': ' . (int) $calls . '<br />';
 		}
 		$out[] = '</p>';
@@ -806,12 +726,8 @@ class WP_Object_Cache {
 			return false;
 		}
 
-		if ( self::USE_GROUPS ) {
-			$redis_safe_group = $this->_key( '', $group );
-			return $this->_call_redis( 'hExists', $redis_safe_group, $key );
-		}
 		$id = $this->_key( $key, $group );
-		return $this->_call_redis( 'exists', $id );
+		return $this->_call_apcu( 'apcu_exists', $id );
 	}
 
 	/**
@@ -822,13 +738,8 @@ class WP_Object_Cache {
 	 * @return boolean
 	 */
 	protected function _isset_internal( $key, $group ) {
-		if ( self::USE_GROUPS ) {
-			$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
-			return isset( $this->cache[ $multisite_safe_group ][ $key ] );
-		} else {
-			$key = $this->_key( $key, $group );
-			return isset( $this->cache[ $key ] );
-		}
+		$key = $this->_key( $key, $group );
+		return isset( $this->cache[ $key ] );
 	}
 
 	/**
@@ -840,16 +751,9 @@ class WP_Object_Cache {
 	 */
 	protected function _get_internal( $key, $group ) {
 		$value = null;
-		if ( self::USE_GROUPS ) {
-			$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
-			if ( isset( $this->cache[ $multisite_safe_group ][ $key ] ) ) {
-				$value = $this->cache[ $multisite_safe_group ][ $key ];
-			}
-		} else {
-			$key = $this->_key( $key, $group );
-			if ( isset( $this->cache[ $key ] ) ) {
-				$value = $this->cache[ $key ];
-			}
+		$key = $this->_key( $key, $group );
+		if ( isset( $this->cache[ $key ] ) ) {
+			$value = $this->cache[ $key ];
 		}
 		if ( is_object( $value ) ) {
 			return clone $value;
@@ -869,16 +773,8 @@ class WP_Object_Cache {
 		if ( is_null( $value ) ) {
 			$value = '';
 		}
-		if ( self::USE_GROUPS ) {
-			$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
-			if ( ! isset( $this->cache[ $multisite_safe_group ] ) ) {
-				$this->cache[ $multisite_safe_group ] = array();
-			}
-			$this->cache[ $multisite_safe_group ][ $key ] = $value;
-		} else {
-			$key = $this->_key( $key, $group );
-			$this->cache[ $key ] = $value;
-		}
+		$key = $this->_key( $key, $group );
+		$this->cache[ $key ] = $value;
 	}
 
 	/**
@@ -888,25 +784,18 @@ class WP_Object_Cache {
 	 * @param string $group
 	 */
 	protected function _unset_internal( $key, $group ) {
-		if ( self::USE_GROUPS ) {
-			$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
-			if ( isset( $this->cache[ $multisite_safe_group ][ $key ] ) ) {
-				unset( $this->cache[ $multisite_safe_group ][ $key ] );
-			}
-		} else {
-			$key = $this->_key( $key, $group );
-			if ( isset( $this->cache[ $key ] ) ) {
-				unset( $this->cache[ $key ] );
-			}
+		$key = $this->_key( $key, $group );
+		if ( isset( $this->cache[ $key ] ) ) {
+			unset( $this->cache[ $key ] );
 		}
 	}
 
 	/**
-	 * Utility function to generate the redis key for a given key and group.
+	 * Utility function to generate the APCu key for a given key and group.
 	 *
 	 * @param  string $key   The cache key.
 	 * @param  string $group The cache group.
-	 * @return string        A properly prefixed redis cache key.
+	 * @return string        A properly prefixed APCu cache key.
 	 */
 	protected function _key( $key = '', $group = 'default' ) {
 		if ( empty( $group ) ) {
@@ -933,191 +822,52 @@ class WP_Object_Cache {
 	}
 
 	/**
-	 * Wrapper method for connecting to Redis, which lets us retry the connection
-	 */
-	protected function _connect_redis() {
-		global $redis_server;
-
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->is_redis_connected = false;
-			$this->missing_redis_message = 'Warning! PHPRedis module is unavailable, which is required by WP Redis object cache.';
-			return $this->is_redis_connected;
-		}
-
-		if ( empty( $redis_server ) ) {
-			# Attempt to automatically load Pantheon's Redis config from the env.
-			if ( isset( $_SERVER['CACHE_HOST'] ) ) {
-				$redis_server = array(
-					'host' => $_SERVER['CACHE_HOST'],
-					'port' => $_SERVER['CACHE_PORT'],
-					'auth' => $_SERVER['CACHE_PASSWORD'],
-				);
-			} else {
-				$redis_server = array(
-					'host' => '127.0.0.1',
-					'port' => 6379,
-				);
-			}
-		}
-
-		$this->redis = new Redis;
-
-		if ( file_exists( $redis_server['host'] ) && 'socket' === filetype( $redis_server['host'] ) ) { //unix socket connection
-			//port must be null or socket won't connect
-			$port = null;
-		} else { //tcp connection
-			$port = ! empty( $redis_server['port'] ) ? $redis_server['port'] : 6379;
-		}
-		$this->redis->connect( $redis_server['host'], $port, 1, null, 100 ); # 1s timeout, 100ms delay between reconnections
-		if ( ! empty( $redis_server['auth'] ) ) {
-			try {
-				$this->redis->auth( $redis_server['auth'] );
-			} catch ( RedisException $e ) {
-				// PhpRedis throws an Exception when it fails a server call.
-				// To prevent WordPress from fataling, we catch the Exception.
-				try {
-					$this->last_triggered_error = 'WP Redis: ' . $e->getMessage();
-					// Be friendly to developers debugging production servers by triggering an error
-					// @codingStandardsIgnoreStart
-					trigger_error( $this->last_triggered_error, E_USER_WARNING );
-					// @codingStandardsIgnoreEnd
-				} catch ( PHPUnit_Framework_Error_Warning $e ) {
-					// PHPUnit throws an Exception when `trigger_error()` is called.
-					// To ensure our tests (which expect Exceptions to be caught) continue to run,
-					// we catch the PHPUnit exception and inspect the RedisException message
-				}
-			}
-		}
-		$this->is_redis_connected = $this->redis->isConnected();
-		if ( ! $this->is_redis_connected ) {
-			$this->missing_redis_message = 'Warning! WP Redis object cache cannot connect to Redis server.';
-		}
-		return $this->is_redis_connected;
-	}
-
-	/**
-	 * Wrapper method for calls to Redis, which fails gracefully when Redis is unavailable
+	 * Wrapper method for calls to APCu, which fails gracefully when APCu is unavailable
 	 *
-	 * @param string $method
+	 * @param string $function
 	 * @param mixed $args
 	 * @return mixed
 	 */
-	protected function _call_redis( $method ) {
+	protected function _call_apcu( $function ) {
 		global $wpdb;
 
 		$arguments = func_get_args();
 		array_shift( $arguments ); // ignore $method
 
-		// $group is intended for the failback, and isn't passed to the Redis callback
-		if ( 'hIncrBy' === $method ) {
-			$group = array_pop( $arguments );
-		}
-
-		if ( $this->is_redis_connected ) {
-			try {
-				if ( ! isset( $this->redis_calls[ $method ] ) ) {
-					$this->redis_calls[ $method ] = 0;
-				}
-				$this->redis_calls[ $method ]++;
-				$retval = call_user_func_array( array( $this->redis, $method ), $arguments );
-				return $retval;
-			} catch ( RedisException $e ) {
-				// PhpRedis throws an Exception when it fails a server call.
-				// To prevent WordPress from fataling, we catch the Exception.
-				$retry_exception_messages = array( 'socket error on read socket', 'Connection closed', 'Redis server went away' );
-				$retry_exception_messages = apply_filters( 'wp_redis_retry_exception_messages', $retry_exception_messages );
-				if ( in_array( $e->getMessage(), $retry_exception_messages, true ) ) {
-					try {
-						$this->last_triggered_error = 'WP Redis: ' . $e->getMessage();
-						// Be friendly to developers debugging production servers by triggering an error
-						// @codingStandardsIgnoreStart
-						trigger_error( $this->last_triggered_error, E_USER_WARNING );
-						// @codingStandardsIgnoreEnd
-					} catch ( PHPUnit_Framework_Error_Warning $e ) {
-						// PHPUnit throws an Exception when `trigger_error()` is called.
-						// To ensure our tests (which expect Exceptions to be caught) continue to run,
-						// we catch the PHPUnit exception and inspect the RedisException message
-					}
-					// Attempt to refresh the connection if it was successfully established once
-					// $this->is_redis_connected will be set inside _connect_redis()
-					if ( $this->_connect_redis() ) {
-						return call_user_func_array( array( $this, '_call_redis' ), array_merge( array( $method ), $arguments ) );
-					}
-					// Fall through to fallback below
-				} else {
-					throw $e;
-				}
+		if ( $this->is_apcu_available ) {
+			if ( ! isset( $this->apcu_calls[ $function ] ) ) {
+				$this->apcu_calls[ $function ] = 0;
 			}
+			$this->apcu_calls[ $function ]++;
+			$retval = call_user_func_array( $function, $arguments );
+			return $retval;
 		}
 
-		if ( $this->is_redis_failback_flush_enabled() && ! $this->do_redis_failback_flush && ! empty( $wpdb ) ) {
-			if ( $this->multisite ) {
-				$table = $wpdb->sitemeta;
-				$col1 = 'meta_key';
-				$col2 = 'meta_value';
-			} else {
-				$table = $wpdb->options;
-				$col1 = 'option_name';
-				$col2 = 'option_value';
-			}
-			// @codingStandardsIgnoreStart
-			$wpdb->query( "INSERT IGNORE INTO {$table} ({$col1},{$col2}) VALUES ('wp_redis_do_redis_failback_flush',1)" );
-			// @codingStandardsIgnoreEnd
-			$this->do_redis_failback_flush = true;
-		}
-
-		// Mock expected behavior from Redis for these methods
+		// Mock expected behavior from APCu for these methods
 		switch ( $method ) {
-			case 'incr':
-			case 'incrBy':
-				$val = $this->cache[ $arguments[0] ];
-				$offset = isset( $arguments[1] ) && 'incrBy' === $method ? $arguments[1] : 1;
-				$val = $val + $offset;
+			case 'apcu_inc':
+				$val = $this->cache[ $arguments[0] ] + $arguments[1];
 				return $val;
-			case 'hIncrBy':
-				$val = $this->_get_internal( $arguments[1], $group );
-				return $val + $arguments[2];
-			case 'decrBy':
-			case 'decr':
-				$val = $this->cache[ $arguments[0] ];
-				$offset = isset( $arguments[1] ) && 'decrBy' === $method ? $arguments[1] : 1;
-				$val = $val - $offset;
+			case 'apcu_dec':
+				$val = $this->cache[ $arguments[0] ] - $arguments[1];
 				return $val;
-			case 'del':
-			case 'hDel':
+			case 'apcu_delete':
 				return 1;
-			case 'flushAll':
-			case 'IsConnected':
-			case 'exists':
-			case 'get':
-			case 'hGet':
+			case 'apcu_exists':
+			case 'apcu_fetch':
 				return false;
 		}
 
 	}
 
 	/**
-	 * Admin UI to let the end user know something about the Redis connection isn't working.
+	 * Admin UI to let the end user know that APCu isn't available
 	 */
-	public function wp_action_admin_notices_warn_missing_redis() {
-		if ( ! current_user_can( 'manage_options' ) || empty( $this->missing_redis_message ) ) {
+	public function wp_action_admin_notices_warn_missing_apcu() {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		echo '<div class="message error"><p>' . esc_html( $this->missing_redis_message ) . '</p></div>';
-	}
-
-	/**
-	 * Whether or not wakeup flush is enabled
-	 *
-	 * @return bool
-	 */
-	private function is_redis_failback_flush_enabled() {
-		if ( defined( 'WP_INSTALLING' ) && WP_INSTALLING ) {
-			return false;
-		} else if ( defined( 'WP_REDIS_DISABLE_FAILBACK_FLUSH' ) && WP_REDIS_DISABLE_FAILBACK_FLUSH ) {
-			return false;
-		}
-		return true;
+		echo '<div class="message error"><p>Warning! APCu module is unavailable, which is required by WP LCache object cache.</p></div>';
 	}
 
 	/**
@@ -1131,32 +881,10 @@ class WP_Object_Cache {
 		$this->multisite = is_multisite();
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 
-		if ( ! $this->_connect_redis() && function_exists( 'add_action' ) ) {
-			add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_redis' ) );
-		}
+		$this->is_apcu_available = function_exists( 'apcu_cache_info' );
 
-		if ( $this->is_redis_failback_flush_enabled() && ! empty( $wpdb ) ) {
-			if ( $this->multisite ) {
-				$table = $wpdb->sitemeta;
-				$col1 = 'meta_key';
-				$col2 = 'meta_value';
-			} else {
-				$table = $wpdb->options;
-				$col1 = 'option_name';
-				$col2 = 'option_value';
-			}
-			// @codingStandardsIgnoreStart
-			$this->do_redis_failback_flush = (bool) $wpdb->get_results( "SELECT {$col2} FROM {$table} WHERE {$col1}='wp_redis_do_redis_failback_flush'" );
-			// @codingStandardsIgnoreEnd
-			if ( $this->is_redis_connected && $this->do_redis_failback_flush ) {
-				$ret = $this->_call_redis( 'flushAll' );
-				if ( $ret ) {
-					// @codingStandardsIgnoreStart
-					$wpdb->query( "DELETE FROM {$table} WHERE {$col1}='wp_redis_do_redis_failback_flush'" );
-					// @codingStandardsIgnoreEnd
-					$this->do_redis_failback_flush = false;
-				}
-			}
+		if ( ! $this->is_apcu_available && function_exists( 'add_action' ) ) {
+			add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_apcu' ) );
 		}
 
 		$this->global_prefix = ( $this->multisite || defined( 'CUSTOM_USER_TABLE' ) && defined( 'CUSTOM_USER_META_TABLE' ) ) ? '' : $table_prefix;

@@ -7,37 +7,32 @@ class CacheTest extends WP_UnitTestCase {
 
 	private $cache;
 
-	private static $exists_key;
+	private static $exists_function;
 
-	private static $get_key;
+	private static $get_function;
 
-	private static $set_key;
+	private static $set_function;
 
-	private static $incrBy_key;
+	private static $incr_function;
 
-	private static $decrBy_key;
+	private static $decr_function;
 
-	private static $delete_key;
+	private static $delete_function;
 
 	public function setUp() {
 		parent::setUp();
-		$GLOBALS['redis_server'] = array(
-			'host'    => '127.0.0.1',
-			'port'    => 6379,
-		);
 		// create two cache objects with a shared cache dir
 		// this simulates a typical cache situation, two separate requests interacting
 		$this->cache =& $this->init_cache();
 		$this->cache->cache_hits = $this->cache->cache_misses = 0;
-		$this->cache->redis_calls = array();
+		$this->cache->apcu_calls = array();
 
-		self::$exists_key = WP_Object_Cache::USE_GROUPS ? 'hExists' : 'exists';
-		self::$get_key = WP_Object_Cache::USE_GROUPS ? 'hGet' : 'get';
-		self::$set_key = WP_Object_Cache::USE_GROUPS ? 'hSet' : 'set';
-		self::$incrBy_key = WP_Object_Cache::USE_GROUPS ? 'hIncrBy' : 'incrBy';
-		// 'hIncrBy' isn't a typo here — Redis doesn't support decrBy on groups
-		self::$decrBy_key = WP_Object_Cache::USE_GROUPS ? 'hIncrBy' : 'decrBy';
-		self::$delete_key = WP_Object_Cache::USE_GROUPS ? 'hDel' : 'del';
+		self::$exists_function = 'apcu_exists';
+		self::$get_function = 'apcu_fetch';
+		self::$set_function = 'apcu_store';
+		self::$incr_function = 'apcu_inc';
+		self::$decr_function = 'apcu_dec';
+		self::$delete_function = 'apcu_delete';
 
 	}
 
@@ -48,113 +43,19 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	public function test_loaded() {
-		$this->assertTrue( WP_REDIS_OBJECT_CACHE );
-	}
-
-	public function test_redis_connected() {
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
-		}
-		$this->assertTrue( isset( $this->cache->redis ) );
-		$this->assertTrue( $this->cache->redis->IsConnected() );
-	}
-
-	public function test_redis_reload_connection_closed() {
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
-		}
-		// Connection is live
-		$this->cache->set( 'foo', 'bar' );
-		$this->assertTrue( $this->cache->redis->IsConnected() );
-		$this->assertTrue( $this->cache->is_redis_connected );
-		$this->assertEquals( 'bar', $this->cache->get( 'foo', 'default', true ) );
-		// Connection is closed, and refreshed the next time it's requested
-		$this->cache->redis->close();
-		$this->assertTrue( $this->cache->is_redis_connected );
-		$this->assertFalse( $this->cache->redis->IsConnected() );
-		// Reload occurs with set()
-		$this->cache->set( 'foo', 'banana' );
-		$this->assertEquals( 'WP Redis: Connection closed', $this->cache->last_triggered_error );
-		$this->assertEquals( 'banana', $this->cache->get( 'foo' ) );
-		$this->assertTrue( $this->cache->is_redis_connected );
-		$this->assertTrue( $this->cache->redis->IsConnected() );
-	}
-
-	public function test_redis_reload_force_cache_flush() {
-		global $wpdb, $redis_server;
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
-		}
-
-		if ( is_multisite() ) {
-			$table = $wpdb->sitemeta;
-			$col1 = 'meta_key';
-			$col2 = 'meta_value';
-		} else {
-			$table = $wpdb->options;
-			$col1 = 'option_name';
-			$col2 = 'option_value';
-		}
-
-		// @codingStandardsIgnoreStart
-		$this->assertFalse( (bool) $wpdb->get_results( "SELECT {$col2} FROM {$table} WHERE {$col1}='wp_redis_do_redis_failback_flush'" ) );
-		// @codingStandardsIgnoreEnd
-		$this->cache->set( 'foo', 'burrito' );
-		// Force a bad connection
-		$redis_server['host'] = '127.0.0.1';
-		$redis_server['port'] = 9999;
-		$this->cache->redis->connect( $redis_server['host'], $redis_server['port'], 1, null, 100 );
-		// Setting cache value when redis connection fails saves wakeup flush
-		$this->cache->set( 'foo', 'bar' );
-		$this->assertEquals( 'WP Redis: Redis server went away', $this->cache->last_triggered_error );
-		// @codingStandardsIgnoreStart
-		$this->assertEquals( "INSERT IGNORE INTO {$table} ({$col1},{$col2}) VALUES ('wp_redis_do_redis_failback_flush',1)", $wpdb->last_query );
-		$this->assertTrue( (bool) $wpdb->get_results( "SELECT {$col2} FROM {$table} WHERE {$col1}='wp_redis_do_redis_failback_flush'" ) );
-		// @codingStandardsIgnoreEnd
-		$this->assertTrue( $this->cache->do_redis_failback_flush );
-		$this->assertEquals( 'bar', $this->cache->get( 'foo' ) );
-		// Cache load with bad connection
-		$this->cache = $this->init_cache();
-		$this->assertTrue( $this->cache->do_redis_failback_flush );
-		$this->assertEquals( "SELECT {$col2} FROM {$table} WHERE {$col1}='wp_redis_do_redis_failback_flush'", $wpdb->last_query );
-		// Cache load with a restored Redis connection will flush Redis
-		$redis_server['port'] = 6379;
-		$this->cache = $this->init_cache();
-		$this->assertFalse( $this->cache->do_redis_failback_flush );
-		$this->assertEquals( "DELETE FROM {$table} WHERE {$col1}='wp_redis_do_redis_failback_flush'", $wpdb->last_query );
-		$this->assertEquals( null, $this->cache->get( 'foo' ) );
-		// Cache load, but Redis shouldn't be flushed again
-		$this->cache = $this->init_cache();
-		$this->assertFalse( $this->cache->do_redis_failback_flush );
-		$this->assertEquals( "SELECT {$col2} FROM {$table} WHERE {$col1}='wp_redis_do_redis_failback_flush'", $wpdb->last_query );
-	}
-
-	public function test_redis_bad_authentication() {
-		global $redis_server;
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
-		}
-		$redis_server['host'] = '127.0.0.1';
-		$redis_server['port'] = 9999;
-		$redis_server['auth'] = 'foobar';
-		$cache = new WP_Object_Cache;
-		$this->assertEquals( 'WP Redis: Redis server went away', $cache->last_triggered_error );
-		$this->assertFalse( $cache->is_redis_connected );
-		// Fails back to the internal object cache
-		$cache->set( 'foo', 'bar' );
-		$this->assertEquals( 'bar', $cache->get( 'foo' ) );
+		$this->assertTrue( WP_LCACHE_OBJECT_CACHE );
 	}
 
 	public function test_miss() {
 		$this->assertEquals( null, $this->cache->get( rand_str() ) );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 1, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$get_key     => 1,
-			), $this->cache->redis_calls );
+				self::$get_function     => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -166,13 +67,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val, $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 1,
-				self::$set_key        => 1,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 1,
+				self::$set_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -185,13 +86,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val, $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 1,
-				self::$set_key        => 1,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 1,
+				self::$set_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -204,13 +105,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( '', $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 1,
-				self::$set_key        => 1,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 1,
+				self::$set_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -227,13 +128,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val1, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 1,
-				self::$set_key        => 1,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 1,
+				self::$set_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -249,14 +150,14 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val, $this->cache->get( $key ) );
 		$this->assertTrue( $this->cache->replace( $key, $val2 ) );
 		$this->assertEquals( $val2, $this->cache->get( $key ) );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 2,
-				self::$set_key        => 2,
-				self::$get_key        => 1,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 2,
+				self::$set_function        => 2,
+				self::$get_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -273,12 +174,12 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val2, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$set_key        => 2,
-			), $this->cache->redis_calls );
+				self::$set_function        => 2,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -302,13 +203,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertFalse( $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 1, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 2,
-				self::$set_key        => 1,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 2,
+				self::$set_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -338,18 +239,18 @@ class CacheTest extends WP_UnitTestCase {
 	public function test_get_already_exists_internal() {
 		$key = rand_str();
 		$this->cache->set( $key, 'alpha' );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$set_key        => 1,
-			), $this->cache->redis_calls );
+				self::$set_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
-		$this->cache->redis_calls = array(); // reset to limit scope of test
+		$this->cache->apcu_calls = array(); // reset to limit scope of test
 		$this->assertEquals( 'alpha', $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 	}
 
 	public function test_get_missing_persistent() {
@@ -360,12 +261,12 @@ class CacheTest extends WP_UnitTestCase {
 		$this->cache->get( $key );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$get_key        => 2,
-			), $this->cache->redis_calls );
+				self::$get_function        => 2,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -376,92 +277,92 @@ class CacheTest extends WP_UnitTestCase {
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 1, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 		$this->cache->set( $key, 'alpha', $group );
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 	}
 
 	public function test_get_false_value_persistent_cache() {
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
+		if ( ! function_exists( 'apcu_cache_info' ) ) {
+			$this->markTestSkipped( 'APCu extension not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, false );
 		$this->cache->cache_hits = $this->cache->cache_misses = 0; // reset everything
-		$this->cache->redis_calls = $this->cache->cache = array(); // reset everything
+		$this->cache->apcu_calls = $this->cache->cache = array(); // reset everything
 		$found = null;
 		$this->assertFalse( $this->cache->get( $key, 'default', false, $found ) );
 		$this->assertTrue( $found );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$get_key           => 1,
-			), $this->cache->redis_calls );
+				self::$get_function           => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
 	public function test_get_true_value_persistent_cache() {
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
+		if ( ! function_exists( 'apcu_cache_info' ) ) {
+			$this->markTestSkipped( 'APCu extension not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, true );
 		$this->cache->cache_hits = $this->cache->cache_misses = 0; // reset everything
-		$this->cache->redis_calls = $this->cache->cache = array(); // reset everything
+		$this->cache->apcu_calls = $this->cache->cache = array(); // reset everything
 		$found = null;
 		$this->assertTrue( $this->cache->get( $key, 'default', false, $found ) );
 		$this->assertTrue( $found );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$get_key           => 1,
-			), $this->cache->redis_calls );
+				self::$get_function           => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
 	public function test_get_null_value_persistent_cache() {
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
+		if ( ! function_exists( 'apcu_cache_info' ) ) {
+			$this->markTestSkipped( 'APCu extension not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, null );
 		$this->cache->cache_hits = $this->cache->cache_misses = 0; // reset everything
-		$this->cache->redis_calls = $this->cache->cache = array(); // reset everything
+		$this->cache->apcu_calls = $this->cache->cache = array(); // reset everything
 		$found = null;
-		// Redis coherses `null` to an empty string
+		// APCu coherses `null` to an empty string
 		$this->assertEquals( '', $this->cache->get( $key, 'default', false, $found ) );
 		$this->assertTrue( $found );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$get_key           => 1,
-			), $this->cache->redis_calls );
+				self::$get_function           => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
 	public function test_get_force() {
-		if ( ! class_exists( 'Redis' ) ) {
-			$this->markTestSkipped( 'PHPRedis extension not available.' );
+		if ( ! function_exists( 'apcu_cache_info' ) ) {
+			$this->markTestSkipped( 'APCu extension not available.' );
 		}
 
 		$key = rand_str();
@@ -471,30 +372,22 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
 		// Duplicate of _set_internal()
-		if ( WP_Object_Cache::USE_GROUPS ) {
-			$multisite_safe_group = $this->cache->multisite && ! isset( $this->cache->global_groups[ $group ] ) ? $this->cache->blog_prefix . $group : $group;
-			if ( ! isset( $this->cache->cache[ $multisite_safe_group ] ) ) {
-				$this->cache->cache[ $multisite_safe_group ] = array();
-			}
-			$this->cache->cache[ $multisite_safe_group ][ $key ] = 'beta';
+		if ( ! empty( $this->cache->global_groups[ $group ] ) ) {
+			$prefix = $this->cache->global_prefix;
 		} else {
-			if ( ! empty( $this->cache->global_groups[ $group ] ) ) {
-				$prefix = $this->cache->global_prefix;
-			} else {
-				$prefix = $this->cache->blog_prefix;
-			}
-
-			$true_key = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . "$prefix$group:$key" );
-			$this->cache->cache[ $true_key ] = 'beta';
+			$prefix = $this->cache->blog_prefix;
 		}
+
+		$true_key = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . "$prefix$group:$key" );
+		$this->cache->cache[ $true_key ] = 'beta';
 		$this->assertEquals( 'beta', $this->cache->get( $key, $group ) );
 		$this->assertEquals( 'alpha', $this->cache->get( $key, $group, true ) );
 		$this->assertEquals( 3, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
 		$this->assertEquals( array(
-			self::$get_key        => 1,
-			self::$set_key        => 1,
-		), $this->cache->redis_calls );
+			self::$get_function        => 1,
+			self::$set_function        => 1,
+		), $this->cache->apcu_calls );
 	}
 
 	public function test_get_found() {
@@ -528,14 +421,14 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 3, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 1,
-				self::$set_key        => 1,
-				self::$incrBy_key     => 2,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 1,
+				self::$set_function        => 1,
+				self::$incr_function     => 2,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -549,13 +442,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$incrBy_key     => 1,
-				self::$set_key        => 2,
-			), $this->cache->redis_calls );
+				self::$incr_function     => 1,
+				self::$set_function        => 2,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -571,7 +464,7 @@ class CacheTest extends WP_UnitTestCase {
 
 		$this->cache->incr( $key, 2, 'nonpersistent' );
 		$this->assertEquals( 3, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 	}
 
 	public function test_incr_non_persistent_never_below_zero() {
@@ -581,7 +474,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->get( $key, 'nonpersistent' ) );
 		$this->cache->incr( $key, -2, 'nonpersistent' );
 		$this->assertEquals( 0, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 	}
 
 	public function test_wp_cache_incr() {
@@ -620,14 +513,14 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, $this->cache->get( $key ) );
 		$this->assertEquals( 3, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 1,
-				self::$set_key        => 3,
-				self::$decrBy_key     => 3,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 1,
+				self::$set_function        => 3,
+				self::$decr_function     => 3,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -641,13 +534,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$decrBy_key     => 1,
-				self::$set_key        => 2,
-			), $this->cache->redis_calls );
+				self::$decr_function     => 1,
+				self::$set_function        => 2,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -667,7 +560,7 @@ class CacheTest extends WP_UnitTestCase {
 
 		$this->cache->decr( $key, 2, 'nonpersistent' );
 		$this->assertEquals( 0, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 	}
 
 	public function test_decr_non_persistent_never_below_zero() {
@@ -677,7 +570,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->get( $key, 'nonpersistent' ) );
 		$this->cache->decr( $key, 2, 'nonpersistent' );
 		$this->assertEquals( 0, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->redis_calls );
+		$this->assertEmpty( $this->cache->apcu_calls );
 	}
 
 	/**
@@ -717,15 +610,15 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->cache_misses );
 
 		$this->assertFalse( $this->cache->delete( $key, 'default' ) );
-		if ( $this->cache->is_redis_connected ) {
+		if ( $this->cache->is_apcu_available ) {
 			$this->assertEquals( array(
-				self::$exists_key     => 1,
-				self::$set_key        => 1,
-				self::$delete_key     => 1,
-				self::$get_key        => 1,
-			), $this->cache->redis_calls );
+				self::$exists_function     => 1,
+				self::$set_function        => 1,
+				self::$delete_function     => 1,
+				self::$get_function        => 1,
+			), $this->cache->apcu_calls );
 		} else {
-			$this->assertEmpty( $this->cache->redis_calls );
+			$this->assertEmpty( $this->cache->apcu_calls );
 		}
 	}
 
@@ -746,107 +639,6 @@ class CacheTest extends WP_UnitTestCase {
 		// $this->assertTrue( wp_cache_delete( $key, 'default', true ) );
 
 		$this->assertFalse( wp_cache_delete( $key, 'default' ) );
-	}
-
-	public function test_delete_group() {
-		if ( ! defined( 'WP_REDIS_USE_CACHE_GROUPS' ) || ! WP_REDIS_USE_CACHE_GROUPS ) {
-			$this->markTestSkipped( 'Cache groups not enabled.' );
-		}
-		$key1 = rand_str();
-		$val1 = rand_str();
-		$key2 = rand_str();
-		$val2 = rand_str();
-		$key3 = rand_str();
-		$val3 = rand_str();
-		$group = 'foo';
-		$group2 = 'bar';
-
-		// Set up the values
-		$this->cache->set( $key1, $val1, $group );
-		$this->cache->set( $key2, $val2, $group );
-		$this->cache->set( $key3, $val3, $group2 );
-		$this->assertEquals( $val1, $this->cache->get( $key1, $group ) );
-		$this->assertEquals( $val2, $this->cache->get( $key2, $group ) );
-		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
-
-		$this->assertTrue( $this->cache->delete_group( $group ) );
-
-		$this->assertFalse( $this->cache->get( $key1, $group ) );
-		$this->assertFalse( $this->cache->get( $key2, $group ) );
-		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
-
-		// _call_redis( 'delete' ) always returns true when Redis isn't available
-		if ( class_exists( 'Redis' ) ) {
-			$this->assertFalse( $this->cache->delete_group( $group ) );
-		} else {
-			$this->assertTrue( $this->cache->delete_group( $group ) );
-		}
-	}
-
-	public function test_delete_group_non_persistent() {
-		if ( ! defined( 'WP_REDIS_USE_CACHE_GROUPS' ) || ! WP_REDIS_USE_CACHE_GROUPS ) {
-			$this->markTestSkipped( 'Cache groups not enabled.' );
-		}
-		$key1 = rand_str();
-		$val1 = rand_str();
-		$key2 = rand_str();
-		$val2 = rand_str();
-		$key3 = rand_str();
-		$val3 = rand_str();
-		$group = 'foo';
-		$group2 = 'bar';
-		$this->cache->add_non_persistent_groups( array( $group, $group2 ) );
-
-		// Set up the values
-		$this->cache->set( $key1, $val1, $group );
-		$this->cache->set( $key2, $val2, $group );
-		$this->cache->set( $key3, $val3, $group2 );
-		$this->assertEquals( $val1, $this->cache->get( $key1, $group ) );
-		$this->assertEquals( $val2, $this->cache->get( $key2, $group ) );
-		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
-
-		$this->assertTrue( $this->cache->delete_group( $group ) );
-
-		$this->assertFalse( $this->cache->get( $key1, $group ) );
-		$this->assertFalse( $this->cache->get( $key2, $group ) );
-		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
-
-		$this->assertFalse( $this->cache->delete_group( $group ) );
-	}
-
-	public function test_wp_cache_delete_group() {
-		if ( ! defined( 'WP_REDIS_USE_CACHE_GROUPS' ) || ! WP_REDIS_USE_CACHE_GROUPS ) {
-			$this->markTestSkipped( 'Cache groups not enabled.' );
-		}
-		$key1 = rand_str();
-		$val1 = rand_str();
-		$key2 = rand_str();
-		$val2 = rand_str();
-		$key3 = rand_str();
-		$val3 = rand_str();
-		$group = 'foo';
-		$group2 = 'bar';
-
-		// Set up the values
-		wp_cache_set( $key1, $val1, $group );
-		wp_cache_set( $key2, $val2, $group );
-		wp_cache_set( $key3, $val3, $group2 );
-		$this->assertEquals( $val1, wp_cache_get( $key1, $group ) );
-		$this->assertEquals( $val2, wp_cache_get( $key2, $group ) );
-		$this->assertEquals( $val3, wp_cache_get( $key3, $group2 ) );
-
-		$this->assertTrue( wp_cache_delete_group( $group ) );
-
-		$this->assertFalse( wp_cache_get( $key1, $group ) );
-		$this->assertFalse( wp_cache_get( $key2, $group ) );
-		$this->assertEquals( $val3, wp_cache_get( $key3, $group2 ) );
-
-		// _call_redis( 'delete' ) always returns true when Redis isn't available
-		if ( class_exists( 'Redis' ) ) {
-			$this->assertFalse( wp_cache_delete_group( $group ) );
-		} else {
-			$this->assertTrue( wp_cache_delete_group( $group ) );
-		}
 	}
 
 	public function test_switch_to_blog() {
