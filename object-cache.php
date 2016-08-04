@@ -678,7 +678,7 @@ class WP_Object_Cache {
 	 */
 	public function stats() {
 		$total_apcu_calls = 0;
-		foreach ( $this->apcu_calls as $method => $calls ) {
+		foreach ( $this->apcu_calls as $function => $calls ) {
 			$total_apcu_calls += $calls;
 		}
 		$out = array();
@@ -686,8 +686,8 @@ class WP_Object_Cache {
 		$out[] = '<strong>Cache Hits:</strong>' . (int) $this->cache_hits . '<br />';
 		$out[] = '<strong>Cache Misses:</strong>' . (int) $this->cache_misses . '<br />';
 		$out[] = '<strong>APCu Calls:</strong>' . (int) $total_apcu_calls . ':<br />';
-		foreach ( $this->apcu_calls as $method => $calls ) {
-			$out[] = ' - ' . esc_html( $method ) . ': ' . (int) $calls . '<br />';
+		foreach ( $this->apcu_calls as $function => $calls ) {
+			$out[] = ' - ' . esc_html( $function ) . ': ' . (int) $calls . '<br />';
 		}
 		$out[] = '</p>';
 		$out[] = '<ul>';
@@ -832,7 +832,7 @@ class WP_Object_Cache {
 		global $wpdb;
 
 		$arguments = func_get_args();
-		array_shift( $arguments ); // ignore $method
+		array_shift( $arguments ); // ignore $function
 
 		if ( $this->is_apcu_available ) {
 			if ( ! isset( $this->apcu_calls[ $function ] ) ) {
@@ -844,7 +844,7 @@ class WP_Object_Cache {
 		}
 
 		// Mock expected behavior from APCu for these methods
-		switch ( $method ) {
+		switch ( $function ) {
 			case 'apcu_inc':
 				$val = $this->cache[ $arguments[0] ] + $arguments[1];
 				return $val;
