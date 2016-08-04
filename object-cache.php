@@ -481,7 +481,7 @@ class WP_Object_Cache {
 	public function flush( $apcu = true ) {
 		$this->cache = array();
 		if ( $apcu ) {
-			$this->_call_apcu( 'apcu_delete' );
+			$this->_call_apcu( 'apcu_clear_cache' );
 		}
 
 		return true;
