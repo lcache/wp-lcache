@@ -8,3 +8,7 @@
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
 WordPress Object Cache using APCu
+
+## Description ##
+
+[![Travis CI](https://travis-ci.org/pantheon-systems/wp-lcache.svg?branch=master)](https://travis-ci.org/pantheon-systems/wp-lcache)
