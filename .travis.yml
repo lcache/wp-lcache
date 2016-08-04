@@ -39,7 +39,7 @@ script:
     - |
       if [[ ! -z "$WP_VERSION" ]] ; then
         if [[ "$PHP_APCU" == "enabled" ]] ; then
-          # Install APCu
+          echo "no" | pecl install apcu
         fi
         phpunit
         phpunit -c multisite.xml
