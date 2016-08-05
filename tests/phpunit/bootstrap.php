@@ -20,3 +20,7 @@ copy( dirname( dirname( dirname( __FILE__ ) ) ) . '/object-cache.php', $_core_di
 
 require $_tests_dir . '/includes/bootstrap.php';
 
+error_log( PHP_EOL );
+$apcu_state = function_exists( 'apcu_sma_info' ) && apcu_sma_info() ? 'enabled' : 'disabled';
+error_log( 'APCu: ' . $apcu_state . PHP_EOL );
+error_log( PHP_EOL );

@@ -881,7 +881,7 @@ class WP_Object_Cache {
 		$this->multisite = is_multisite();
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 
-		$this->is_apcu_available = function_exists( 'apcu_cache_info' );
+		$this->is_apcu_available = function_exists( 'apcu_sma_info' ) && apcu_sma_info();
 
 		if ( ! $this->is_apcu_available && function_exists( 'add_action' ) ) {
 			add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_apcu' ) );
