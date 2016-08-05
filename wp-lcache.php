@@ -41,6 +41,13 @@ function wp_lcache_initialize_database_schema() {
 		KEY `expiration` (`expiration`),
 		KEY `lookup_miss` (`key`,`event_id`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
+
+	$wpdb->query( "CREATE TABLE IF NOT EXISTS `lcache_tags` (
+		`tag` varchar(255) NOT NULL DEFAULT '',
+		`key` varchar(255) NOT NULL DEFAULT '',
+		PRIMARY KEY (`tag`,`key`),
+		KEY `rewritten_entry` (`key`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 }
 
 register_activation_hook( __FILE__, 'wp_lcache_initialize_database_schema' );
