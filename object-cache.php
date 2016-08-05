@@ -457,7 +457,7 @@ class WP_Object_Cache {
 		if ( $this->_should_persist( $group ) ) {
 			$id = $this->_key( $key, $group );
 			$result = $this->_call_apcu( 'apcu_delete', $id );
-			if ( 1 !== $result ) {
+			if ( true !== $result ) {
 				return false;
 			}
 		}
@@ -852,7 +852,7 @@ class WP_Object_Cache {
 				$val = $this->cache[ $arguments[0] ] - $arguments[1];
 				return $val;
 			case 'apcu_delete':
-				return 1;
+				return true;
 			case 'apcu_exists':
 			case 'apcu_fetch':
 				return false;
