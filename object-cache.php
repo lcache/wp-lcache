@@ -915,7 +915,7 @@ class WP_Object_Cache {
 
 		if ( function_exists( 'apcu_sma_info' ) && apcu_sma_info() && class_exists( 'LCacheNullL1' ) ) {
 			$l1 = new LCacheNullL1();
-			if ( php_sapi_name() !== 'cli' ) {
+			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
 				$l1 = new LCacheAPCuL1();
 			}
 			$port = null;

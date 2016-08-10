@@ -516,7 +516,7 @@ class CacheTest extends WP_UnitTestCase {
 		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
 				self::$exists     => 1,
-				self::$set        => 3,
+				self::$set        => 2,
 				self::$decr     => 3,
 			), $this->cache->lcache_calls );
 		} else {
