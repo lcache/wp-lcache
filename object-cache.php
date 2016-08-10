@@ -946,6 +946,7 @@ class WP_Object_Cache {
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
 			$l2 = new LCacheDatabaseL2( $dbh );
 			$this->lcache = new LCacheIntegrated( $l1, $l2 );
+			$this->lcache->synchronize();
 		}
 
 		if ( ! $this->is_lcache_available() && function_exists( 'add_action' ) ) {
