@@ -22,7 +22,7 @@ module.exports = function( grunt ) {
 				src: './'
 			},
 			options: {
-				bin: "vendor/bin/phpcs --extensions=php --ignore=\"*/vendor/*,*/node_modules/*\"",
+				bin: "vendor/bin/phpcs --extensions=php --ignore=\"*/vendor/*,*/lib/*,*/node_modules/*\"",
 				standard: "phpcs.ruleset.xml"
 			}
 		},
