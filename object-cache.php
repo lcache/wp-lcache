@@ -870,9 +870,15 @@ class WP_Object_Cache {
 		switch ( $method ) {
 			case 'incr':
 				$val = $this->cache[ $arguments[0] ] + $arguments[1];
+				if ( $val < 0 ) {
+					$val = 0;
+				}
 				return $val;
 			case 'decr':
 				$val = $this->cache[ $arguments[0] ] - $arguments[1];
+				if ( $val < 0 ) {
+					$val = 0;
+				}
 				return $val;
 			case 'delete':
 				return true;
