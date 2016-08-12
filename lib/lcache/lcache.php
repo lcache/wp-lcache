@@ -105,7 +105,7 @@ class LCacheAPCuL1 extends LCacheL1 {
     return $entry;
   }
 
-  public function delete($event_id, $key=NULL) {
+  public function delete($event_id=NULL, $key=NULL) {
     if (is_null($key)) {
       return apcu_clear_cache();
     }
