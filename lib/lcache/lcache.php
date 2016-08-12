@@ -32,6 +32,11 @@ abstract class LCacheX {
     }
     return $entry->value;
   }
+
+  public function exists($key) {
+    $value = $this->get($key);
+    return !is_null($value);
+  }
 }
 
 abstract class LCacheL1 extends LCacheX {
@@ -103,6 +108,11 @@ class LCacheAPCuL1 extends LCacheL1 {
     }
     $this->recordHit();
     return $entry;
+  }
+
+  public function exists($key) {
+    $apcu_key = $this->getLocalKey($key);
+    return apcu_exists($apcu_key);
   }
 
   public function delete($event_id=NULL, $key=NULL) {
@@ -365,14 +375,20 @@ class LCacheDatabaseL2 extends LCacheL2 {
   protected $degraded;
   protected $log_locally;
   protected $errors;
+  protected $table_prefix;
 
-  public function __construct($dbh, $log_locally=FALSE) {
+  public function __construct($dbh, $table_prefix='', $log_locally=FALSE) {
     $this->hits = 0;
     $this->misses = 0;
     $this->dbh = $dbh;
     $this->degraded = FALSE;
     $this->log_locally = $log_locally;
     $this->errors = array();
+    $this->table_prefix = $table_prefix;
+  }
+
+  protected function prefixTable($base_name) {
+    return $this->table_prefix . $base_name;
   }
 
   protected function logSchemaIssueOrRethrow($description, $pdo_exception) {
@@ -403,7 +419,7 @@ class LCacheDatabaseL2 extends LCacheL2 {
   // Returns an LCacheEntry
   public function getEntry($key) {
     try {
-      $sth = $this->dbh->prepare('SELECT "event_id", "pool", "key", "value", "created", "expiration" FROM lcache_events WHERE "key" = :key AND ("expiration" >= :now OR "expiration" IS NULL) ORDER BY "event_id" DESC LIMIT 1');
+      $sth = $this->dbh->prepare('SELECT "event_id", "pool", "key", "value", "created", "expiration" FROM ' . $this->prefixTable('lcache_events') .' WHERE "key" = :key AND ("expiration" >= :now OR "expiration" IS NULL) ORDER BY "event_id" DESC LIMIT 1');
       $sth->bindValue(':key', $key, PDO::PARAM_STR);
       $sth->bindValue(':now', REQUEST_TIME, PDO::PARAM_INT);
       $sth->execute();
@@ -419,16 +435,30 @@ class LCacheDatabaseL2 extends LCacheL2 {
       return NULL;
     }
 
-    $last_matching_entry->value = unserialize($last_matching_entry->value);
-
     // If last event was a deletion, miss.
     if (is_null($last_matching_entry->value)) {
       $this->misses++;
       return NULL;
     }
 
+    $last_matching_entry->value = unserialize($last_matching_entry->value);
+
     $this->hits++;
     return $last_matching_entry;
+  }
+
+  public function exists($key) {
+    try {
+      $sth = $this->dbh->prepare('SELECT "event_id", ("value" IS NOT NULL) AS value_not_null, "value" FROM ' . $this->prefixTable('lcache_events') .' WHERE "key" = :key AND ("expiration" >= :now OR "expiration" IS NULL) ORDER BY "event_id" DESC LIMIT 1');
+      $sth->bindValue(':key', $key, PDO::PARAM_STR);
+      $sth->bindValue(':now', REQUEST_TIME, PDO::PARAM_INT);
+      $sth->execute();
+    } catch (PDOException $e) {
+      $this->logSchemaIssueOrRethrow('Failed to search database for cache item existence', $e);
+      return NULL;
+    }
+    $result = $sth->fetchObject();
+    return ($result !== FALSE && $result->value_not_null);
   }
 
   public function debugDumpEvents() {
@@ -442,10 +472,10 @@ class LCacheDatabaseL2 extends LCacheL2 {
   public function set($pool, $key, $value, $ttl=NULL, array $tags=[]) {
     $expiration = $ttl ? (REQUEST_TIME + $ttl) : NULL;
     try {
-      $sth = $this->dbh->prepare('INSERT INTO lcache_events ("pool", "key", "value", "created", "expiration") VALUES (:pool, :key, :value, :now, :expiration)');
+      $sth = $this->dbh->prepare('INSERT INTO ' . $this->prefixTable('lcache_events') . ' ("pool", "key", "value", "created", "expiration") VALUES (:pool, :key, :value, :now, :expiration)');
       $sth->bindValue(':pool', $pool, PDO::PARAM_STR);
       $sth->bindValue(':key', $key, PDO::PARAM_STR);
-      $sth->bindValue(':value', serialize($value), PDO::PARAM_LOB);
+      $sth->bindValue(':value', is_null($value) ? NULL : serialize($value), PDO::PARAM_LOB);
       $sth->bindValue(':expiration', $expiration, PDO::PARAM_INT);
       $sth->bindValue(':now', REQUEST_TIME, PDO::PARAM_INT);
       $sth->execute();
@@ -457,7 +487,7 @@ class LCacheDatabaseL2 extends LCacheL2 {
 
     // Delete any existing cache tags on the entry.
     try {
-      $sth = $this->dbh->prepare('DELETE FROM lcache_tags WHERE "key" = :key');
+      $sth = $this->dbh->prepare('DELETE FROM ' . $this->prefixTable('lcache_tags') . ' WHERE "key" = :key');
       $sth->bindValue(':key', $key, PDO::PARAM_STR);
       $sth->execute();
     } catch (PDOException $e) {
@@ -469,7 +499,7 @@ class LCacheDatabaseL2 extends LCacheL2 {
     // @TODO: Turn into one query.
     foreach ($tags as $tag) {
       try {
-        $sth = $this->dbh->prepare('INSERT INTO lcache_tags ("tag", "key") VALUES (:tag, :key)');
+        $sth = $this->dbh->prepare('INSERT INTO ' . $this->prefixTable('lcache_tags') . ' ("tag", "key") VALUES (:tag, :key)');
         $sth->bindValue(':tag', $pool, PDO::PARAM_STR);
         $sth->bindValue(':key', $key, PDO::PARAM_STR);
         $sth->execute();
@@ -488,7 +518,7 @@ class LCacheDatabaseL2 extends LCacheL2 {
     // On a full clear, prune old events.
     if (is_null($key)) {
       try {
-        $sth = $this->dbh->prepare('DELETE FROM lcache_events WHERE event_id < :new_event_id');
+        $sth = $this->dbh->prepare('DELETE FROM ' . $this->prefixTable('lcache_events') . ' WHERE event_id < :new_event_id');
         $sth->bindValue(':new_event_id', $event_id, PDO::PARAM_INT);
         $sth->execute();
       } catch (PDOException $e) {
@@ -500,9 +530,9 @@ class LCacheDatabaseL2 extends LCacheL2 {
   }
 
   public function deleteTag(LCacheL1 $l1, $tag) {
-    // Find the matching keys and delete them.
+    // Find the matching keys and create tombstones for them.
     try {
-      $sth = $this->dbh->prepare('SELECT "key" FROM lcache_tags WHERE "tag" = :tag');
+      $sth = $this->dbh->prepare('SELECT "key" FROM ' . $this->prefixTable('lcache_tags') . ' WHERE "tag" = :tag');
       $sth->bindValue(':tag', $tag, PDO::PARAM_STR);
       $sth->execute();
     } catch (PDOException $e) {
@@ -518,7 +548,7 @@ class LCacheDatabaseL2 extends LCacheL2 {
     // @TODO: Move to a transaction, collect the list of deleted keys,
     // or delete individual tag/key pairs in the loop above.
     try {
-      $sth = $this->dbh->prepare('DELETE FROM lcache_tags WHERE "tag" = :tag');
+      $sth = $this->dbh->prepare('DELETE FROM ' . $this->prefixTable('lcache_tags') . ' WHERE "tag" = :tag');
       $sth->bindValue(':tag', $tag, PDO::PARAM_STR);
       $sth->execute();
     } catch (PDOException $e) {
@@ -536,7 +566,7 @@ class LCacheDatabaseL2 extends LCacheL2 {
     // to the current high-water mark.
     if (is_null($last_applied_event_id)) {
       try {
-        $sth = $this->dbh->prepare('SELECT "event_id" FROM lcache_events ORDER BY "event_id" DESC LIMIT 1');
+        $sth = $this->dbh->prepare('SELECT "event_id" FROM ' . $this->prefixTable('lcache_events') . ' ORDER BY "event_id" DESC LIMIT 1');
         $sth->execute();
       } catch (PDOException $e) {
         $this->logSchemaIssueOrRethrow('Failed to initialize local event application status', $e);
@@ -549,7 +579,7 @@ class LCacheDatabaseL2 extends LCacheL2 {
 
     $applied = 0;
     try {
-      $sth = $this->dbh->prepare('SELECT "event_id", "pool", "key", "value", "created", "expiration" FROM lcache_events WHERE "event_id" > :last_applied_event_id AND "pool" <> :exclude_pool ORDER BY event_id');
+      $sth = $this->dbh->prepare('SELECT "event_id", "pool", "key", "value", "created", "expiration" FROM ' . $this->prefixTable('lcache_events') . ' WHERE "event_id" > :last_applied_event_id AND "pool" <> :exclude_pool ORDER BY event_id');
       $sth->bindValue(':last_applied_event_id', $last_applied_event_id, PDO::PARAM_INT);
       $sth->bindValue(':exclude_pool', $l1->getPool(), PDO::PARAM_STR);
       $sth->execute();
@@ -638,6 +668,14 @@ final class LCacheIntegrated {
       return NULL;
     }
     return $entry->value;
+  }
+
+  public function exists($key) {
+  $exists = $this->l1->exists($key);
+    if ($exists) {
+      return TRUE;
+    }
+    return $this->l2->exists($key);
   }
 
   public function delete($key=NULL) {
