@@ -294,8 +294,8 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_false_value_persistent_cache() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, false );
@@ -316,8 +316,8 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_true_value_persistent_cache() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, true );
@@ -338,8 +338,8 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_null_value_persistent_cache() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, null );
@@ -361,8 +361,8 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_force() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 
 		$key = rand_str();
