@@ -918,9 +918,11 @@ class WP_Object_Cache {
 
 		$this->multisite = is_multisite();
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
-		
+
 		// apcu_sma_info() triggers a warning when APCu is disabled
+		// @codingStandardsIgnoreStart
 		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( 'LCacheNullL1' ) ) {
+		// @codingStandardsIgnoreEnd
 			$l1 = new LCacheNullL1();
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
 				$l1 = new LCacheAPCuL1();
