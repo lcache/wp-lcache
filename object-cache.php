@@ -878,7 +878,7 @@ class WP_Object_Cache {
 				return true;
 			case 'exists':
 			case 'get':
-				return false;
+				return null;
 		}
 
 	}
