@@ -530,7 +530,7 @@ class WP_Object_Cache {
 		$id = $this->_key( $key, $group );
 		$value = $this->_call_lcache( 'get', $id );
 
-		// LCache returns `false` when the key doesn't exist
+		// LCache returns `null` when the key doesn't exist
 		if ( null === $value ) {
 			$this->cache_misses += 1;
 			$found = false;
