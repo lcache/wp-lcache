@@ -924,6 +924,7 @@ class WP_Object_Cache {
 		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( 'LCacheNullL1' ) ) {
 		// @codingStandardsIgnoreEnd
 			$l1 = new LCacheNullL1();
+			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
 				$l1 = new LCacheAPCuL1();
 			}
