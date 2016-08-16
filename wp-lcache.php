@@ -50,4 +50,6 @@ function wp_lcache_initialize_database_schema() {
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 }
 
-register_activation_hook( __FILE__, 'wp_lcache_initialize_database_schema' );
+if ( function_exists( 'register_activation_hook' ) ) {
+	register_activation_hook( __FILE__, 'wp_lcache_initialize_database_schema' );
+}

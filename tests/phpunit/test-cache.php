@@ -7,17 +7,17 @@ class CacheTest extends WP_UnitTestCase {
 
 	private $cache;
 
-	private static $exists_function;
+	private static $exists;
 
-	private static $get_function;
+	private static $get;
 
-	private static $set_function;
+	private static $set;
 
-	private static $incr_function;
+	private static $incr;
 
-	private static $decr_function;
+	private static $decr;
 
-	private static $delete_function;
+	private static $delete;
 
 	public function setUp() {
 		parent::setUp();
@@ -25,14 +25,14 @@ class CacheTest extends WP_UnitTestCase {
 		// this simulates a typical cache situation, two separate requests interacting
 		$this->cache =& $this->init_cache();
 		$this->cache->cache_hits = $this->cache->cache_misses = 0;
-		$this->cache->apcu_calls = array();
+		$this->cache->lcache_calls = array();
 
-		self::$exists_function = 'apcu_exists';
-		self::$get_function = 'apcu_fetch';
-		self::$set_function = 'apcu_store';
-		self::$incr_function = 'apcu_inc';
-		self::$decr_function = 'apcu_dec';
-		self::$delete_function = 'apcu_delete';
+		self::$exists = 'exists';
+		self::$get = 'get';
+		self::$set = 'set';
+		self::$incr = 'incr';
+		self::$decr = 'decr';
+		self::$delete = 'delete';
 
 	}
 
@@ -50,12 +50,12 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( null, $this->cache->get( rand_str() ) );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 1, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$get_function     => 1,
-			), $this->cache->apcu_calls );
+				self::$get     => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -67,13 +67,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val, $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 1,
-				self::$set_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$exists     => 1,
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -86,13 +86,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val, $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 1,
-				self::$set_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$exists     => 1,
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -105,13 +105,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( '', $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 1,
-				self::$set_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$exists     => 1,
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -128,13 +128,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val1, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 1,
-				self::$set_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$exists     => 1,
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -150,14 +150,14 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val, $this->cache->get( $key ) );
 		$this->assertTrue( $this->cache->replace( $key, $val2 ) );
 		$this->assertEquals( $val2, $this->cache->get( $key ) );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 2,
-				self::$set_function        => 2,
-				self::$get_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$exists     => 2,
+				self::$set        => 2,
+				self::$get        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -174,12 +174,12 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $val2, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$set_function        => 2,
-			), $this->cache->apcu_calls );
+				self::$set        => 2,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -203,13 +203,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertFalse( $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 1, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 2,
-				self::$set_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$exists     => 2,
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -239,18 +239,18 @@ class CacheTest extends WP_UnitTestCase {
 	public function test_get_already_exists_internal() {
 		$key = rand_str();
 		$this->cache->set( $key, 'alpha' );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$set_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
-		$this->cache->apcu_calls = array(); // reset to limit scope of test
+		$this->cache->lcache_calls = array(); // reset to limit scope of test
 		$this->assertEquals( 'alpha', $this->cache->get( $key ) );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 	}
 
 	public function test_get_missing_persistent() {
@@ -261,12 +261,12 @@ class CacheTest extends WP_UnitTestCase {
 		$this->cache->get( $key );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$get_function        => 2,
-			), $this->cache->apcu_calls );
+				self::$get        => 2,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -277,92 +277,92 @@ class CacheTest extends WP_UnitTestCase {
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 1, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 0, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 		$this->cache->set( $key, 'alpha', $group );
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 		$this->cache->get( $key, $group );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 2, $this->cache->cache_misses );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 	}
 
 	public function test_get_false_value_persistent_cache() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, false );
 		$this->cache->cache_hits = $this->cache->cache_misses = 0; // reset everything
-		$this->cache->apcu_calls = $this->cache->cache = array(); // reset everything
+		$this->cache->lcache_calls = $this->cache->cache = array(); // reset everything
 		$found = null;
 		$this->assertFalse( $this->cache->get( $key, 'default', false, $found ) );
 		$this->assertTrue( $found );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$get_function           => 1,
-			), $this->cache->apcu_calls );
+				self::$get           => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
 	public function test_get_true_value_persistent_cache() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, true );
 		$this->cache->cache_hits = $this->cache->cache_misses = 0; // reset everything
-		$this->cache->apcu_calls = $this->cache->cache = array(); // reset everything
+		$this->cache->lcache_calls = $this->cache->cache = array(); // reset everything
 		$found = null;
 		$this->assertTrue( $this->cache->get( $key, 'default', false, $found ) );
 		$this->assertTrue( $found );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$get_function           => 1,
-			), $this->cache->apcu_calls );
+				self::$get           => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
 	public function test_get_null_value_persistent_cache() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 		$key = rand_str();
 		$this->cache->set( $key, null );
 		$this->cache->cache_hits = $this->cache->cache_misses = 0; // reset everything
-		$this->cache->apcu_calls = $this->cache->cache = array(); // reset everything
+		$this->cache->lcache_calls = $this->cache->cache = array(); // reset everything
 		$found = null;
 		// APCu coherses `null` to an empty string
 		$this->assertEquals( '', $this->cache->get( $key, 'default', false, $found ) );
 		$this->assertTrue( $found );
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$get_function           => 1,
-			), $this->cache->apcu_calls );
+				self::$get           => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
 	public function test_get_force() {
-		if ( ! function_exists( 'apcu_cache_info' ) ) {
-			$this->markTestSkipped( 'APCu extension not available.' );
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
 		}
 
 		$key = rand_str();
@@ -385,9 +385,9 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 3, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
 		$this->assertEquals( array(
-			self::$get_function        => 1,
-			self::$set_function        => 1,
-		), $this->cache->apcu_calls );
+			self::$get        => 1,
+			self::$set        => 1,
+		), $this->cache->lcache_calls );
 	}
 
 	public function test_get_found() {
@@ -421,14 +421,14 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 3, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 1,
-				self::$set_function        => 1,
-				self::$incr_function     => 2,
-			), $this->cache->apcu_calls );
+				self::$exists     => 1,
+				self::$set        => 1,
+				self::$incr     => 2,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -442,13 +442,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$incr_function     => 1,
-				self::$set_function        => 2,
-			), $this->cache->apcu_calls );
+				self::$incr     => 1,
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -464,7 +464,7 @@ class CacheTest extends WP_UnitTestCase {
 
 		$this->cache->incr( $key, 2, 'nonpersistent' );
 		$this->assertEquals( 3, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 	}
 
 	public function test_incr_non_persistent_never_below_zero() {
@@ -474,7 +474,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->get( $key, 'nonpersistent' ) );
 		$this->cache->incr( $key, -2, 'nonpersistent' );
 		$this->assertEquals( 0, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 	}
 
 	public function test_wp_cache_incr() {
@@ -513,14 +513,14 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, $this->cache->get( $key ) );
 		$this->assertEquals( 3, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 1,
-				self::$set_function        => 3,
-				self::$decr_function     => 3,
-			), $this->cache->apcu_calls );
+				self::$exists     => 1,
+				self::$set        => 2,
+				self::$decr     => 3,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -534,13 +534,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, $this->cache->get( $key ) );
 		$this->assertEquals( 2, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$decr_function     => 1,
-				self::$set_function        => 2,
-			), $this->cache->apcu_calls );
+				self::$decr     => 1,
+				self::$set        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
@@ -560,7 +560,7 @@ class CacheTest extends WP_UnitTestCase {
 
 		$this->cache->decr( $key, 2, 'nonpersistent' );
 		$this->assertEquals( 0, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 	}
 
 	public function test_decr_non_persistent_never_below_zero() {
@@ -570,7 +570,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->get( $key, 'nonpersistent' ) );
 		$this->cache->decr( $key, 2, 'nonpersistent' );
 		$this->assertEquals( 0, $this->cache->get( $key, 'nonpersistent' ) );
-		$this->assertEmpty( $this->cache->apcu_calls );
+		$this->assertEmpty( $this->cache->lcache_calls );
 	}
 
 	/**
@@ -610,15 +610,15 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->cache_misses );
 
 		$this->assertFalse( $this->cache->delete( $key, 'default' ) );
-		if ( $this->cache->is_apcu_available ) {
+		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists_function     => 1,
-				self::$set_function        => 1,
-				self::$delete_function     => 1,
-				self::$get_function        => 1,
-			), $this->cache->apcu_calls );
+				self::$exists     => 1,
+				self::$set        => 1,
+				self::$delete     => 1,
+				self::$get        => 1,
+			), $this->cache->lcache_calls );
 		} else {
-			$this->assertEmpty( $this->cache->apcu_calls );
+			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
 
