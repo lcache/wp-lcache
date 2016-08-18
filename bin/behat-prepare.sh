@@ -1,12 +1,12 @@
 #!/bin/bash
 
-set -ex
-
 ###
 # Prepare a Pantheon site environment for the Behat test suite, by installing
 # and configuring the plugin for the environment. This script is architected
 # such that it can be run a second time if a step fails.
 ###
+
+set -ex
 
 ./bin/behat-check-required.sh
 

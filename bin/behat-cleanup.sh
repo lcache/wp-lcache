@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -ex
-
 ###
 # Delete the Pantheon site environment after the Behat test suite has run.
 ###
+
+set -ex
 
 ./bin/behat-check-required.sh
 

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -ex
-
 ###
 # Execute the Behat test suite against a prepared Pantheon site environment.
 ###
+
+set -ex
 
 ./bin/behat-check-required.sh
 
