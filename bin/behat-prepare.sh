@@ -39,7 +39,8 @@ rm -rf $PREPARE_DIR/wp-content/object-cache.php
 cd $BASH_DIR/..
 rsync -av --exclude='vendor/' --exclude='node_modules/' --exclude='tests/' ./* $PREPARE_DIR/wp-content/plugins/wp-lcache
 rm -rf $PREPARE_DIR/wp-content/plugins/wp-lcache/.git
-cp object-cache.php $PREPARE_DIR/wp-content/object-cache.php
+cd $PREPARE_DIR/wp-content
+ln -s plugins/wp-lcache/object-cache.php object-cache.php
 
 ###
 # Add the debugging plugin to the environment
