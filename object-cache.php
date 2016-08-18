@@ -358,7 +358,7 @@ class WP_Object_Cache {
 			return false;
 		}
 
-		if ( $this->_exists( $key, $group ) ) {
+		if ( $this->exists( $key, $group ) ) {
 			return false;
 		}
 
@@ -404,15 +404,15 @@ class WP_Object_Cache {
 		}
 
 		// The key needs to exist in order to be decremented
-		if ( ! $this->_exists( $key, $group ) ) {
+		if ( ! $this->exists( $key, $group ) ) {
 			return false;
 		}
 
 		$offset = (int) $offset;
 
 		# If this isn't a persistant group, we have to sort this out ourselves, grumble grumble
-		if ( ! $this->_should_persist( $group ) ) {
-			$existing = $this->_get_internal( $key, $group );
+		if ( ! $this->should_persist( $group ) ) {
+			$existing = $this->get_internal( $key, $group );
 			if ( empty( $existing ) || ! is_numeric( $existing ) ) {
 				$existing = 0;
 			} else {
@@ -421,15 +421,15 @@ class WP_Object_Cache {
 			if ( $existing < 0 ) {
 				$existing = 0;
 			}
-			$this->_set_internal( $key, $group, $existing );
+			$this->set_internal( $key, $group, $existing );
 			return $existing;
 		}
 
-		$id = $this->_key( $key, $group );
-		$result = $this->_call_lcache( 'decr', $id, $offset );
+		$id = $this->key( $key, $group );
+		$result = $this->call_lcache( 'decr', $id, $offset );
 
 		if ( is_int( $result ) ) {
-			$this->_set_internal( $key, $group, $result );
+			$this->set_internal( $key, $group, $result );
 		}
 		return $result;
 	}
@@ -453,19 +453,19 @@ class WP_Object_Cache {
 			$group = 'default';
 		}
 
-		if ( ! $force && ! $this->_exists( $key, $group ) ) {
+		if ( ! $force && ! $this->exists( $key, $group ) ) {
 			return false;
 		}
 
-		if ( $this->_should_persist( $group ) ) {
-			$id = $this->_key( $key, $group );
-			$result = $this->_call_lcache( 'delete', $id );
+		if ( $this->should_persist( $group ) ) {
+			$id = $this->key( $key, $group );
+			$result = $this->call_lcache( 'delete', $id );
 			if ( ! $result ) {
 				return false;
 			}
 		}
 
-		$this->_unset_internal( $key, $group );
+		$this->unset_internal( $key, $group );
 		return true;
 	}
 
@@ -484,7 +484,7 @@ class WP_Object_Cache {
 	public function flush( $lcache = true ) {
 		$this->cache = array();
 		if ( $lcache ) {
-			$this->_call_lcache( 'delete' );
+			$this->call_lcache( 'delete' );
 		}
 
 		return true;
@@ -513,22 +513,22 @@ class WP_Object_Cache {
 		}
 
 		// Key is set internally, so we can use this value
-		if ( $this->_isset_internal( $key, $group ) && ! $force ) {
+		if ( $this->isset_internal( $key, $group ) && ! $force ) {
 			$this->cache_hits += 1;
 			$found = true;
-			return $this->_get_internal( $key, $group );
+			return $this->get_internal( $key, $group );
 		}
 
 		// Not a persistent group, so don't try LCache if the value doesn't exist
 		// internally
-		if ( ! $this->_should_persist( $group ) ) {
+		if ( ! $this->should_persist( $group ) ) {
 			$this->cache_misses += 1;
 			$found = false;
 			return false;
 		}
 
-		$id = $this->_key( $key, $group );
-		$value = $this->_call_lcache( 'get', $id );
+		$id = $this->key( $key, $group );
+		$value = $this->call_lcache( 'get', $id );
 
 		// LCache returns `null` when the key doesn't exist
 		if ( null === $value ) {
@@ -542,7 +542,7 @@ class WP_Object_Cache {
 			$value = unserialize( $value );
 		}
 
-		$this->_set_internal( $key, $group, $value );
+		$this->set_internal( $key, $group, $value );
 		$this->cache_hits += 1;
 		$found = true;
 		return $value;
@@ -563,15 +563,15 @@ class WP_Object_Cache {
 		}
 
 		// The key needs to exist in order to be incremented
-		if ( ! $this->_exists( $key, $group ) ) {
+		if ( ! $this->exists( $key, $group ) ) {
 			return false;
 		}
 
 		$offset = (int) $offset;
 
 		# If this isn't a persistant group, we have to sort this out ourselves, grumble grumble
-		if ( ! $this->_should_persist( $group ) ) {
-			$existing = $this->_get_internal( $key, $group );
+		if ( ! $this->should_persist( $group ) ) {
+			$existing = $this->get_internal( $key, $group );
 			if ( empty( $existing ) || ! is_numeric( $existing ) ) {
 				$existing = 1;
 			} else {
@@ -580,15 +580,15 @@ class WP_Object_Cache {
 			if ( $existing < 0 ) {
 				$existing = 0;
 			}
-			$this->_set_internal( $key, $group, $existing );
+			$this->set_internal( $key, $group, $existing );
 			return $existing;
 		}
 
-		$id = $this->_key( $key, $group );
-		$result = $this->_call_lcache( 'incr', $id, $offset );
+		$id = $this->key( $key, $group );
+		$result = $this->call_lcache( 'incr', $id, $offset );
 
 		if ( is_int( $result ) ) {
-			$this->_set_internal( $key, $group, $result );
+			$this->set_internal( $key, $group, $result );
 		}
 		return $result;
 	}
@@ -609,7 +609,7 @@ class WP_Object_Cache {
 			$group = 'default';
 		}
 
-		if ( ! $this->_exists( $key, $group ) ) {
+		if ( ! $this->exists( $key, $group ) ) {
 			return false;
 		}
 
@@ -653,9 +653,9 @@ class WP_Object_Cache {
 			$data = clone $data;
 		}
 
-		$this->_set_internal( $key, $group, $data );
+		$this->set_internal( $key, $group, $data );
 
-		if ( ! $this->_should_persist( $group ) ) {
+		if ( ! $this->should_persist( $group ) ) {
 			return true;
 		}
 
@@ -664,8 +664,8 @@ class WP_Object_Cache {
 			$data = serialize( $data );
 		}
 
-		$id = $this->_key( $key, $group );
-		$this->_call_lcache( 'set', $id, $data, $expire );
+		$id = $this->key( $key, $group );
+		$this->call_lcache( 'set', $id, $data, $expire );
 		return true;
 	}
 
@@ -716,17 +716,17 @@ class WP_Object_Cache {
 	 *
 	 * @access protected
 	 */
-	protected function _exists( $key, $group ) {
-		if ( $this->_isset_internal( $key, $group ) ) {
+	protected function exists( $key, $group ) {
+		if ( $this->isset_internal( $key, $group ) ) {
 			return true;
 		}
 
-		if ( ! $this->_should_persist( $group ) ) {
+		if ( ! $this->should_persist( $group ) ) {
 			return false;
 		}
 
-		$id = $this->_key( $key, $group );
-		return $this->_call_lcache( 'exists', $id );
+		$id = $this->key( $key, $group );
+		return $this->call_lcache( 'exists', $id );
 	}
 
 	/**
@@ -736,8 +736,8 @@ class WP_Object_Cache {
 	 * @param string $group
 	 * @return boolean
 	 */
-	protected function _isset_internal( $key, $group ) {
-		$key = $this->_key( $key, $group );
+	protected function isset_internal( $key, $group ) {
+		$key = $this->key( $key, $group );
 		return isset( $this->cache[ $key ] );
 	}
 
@@ -748,9 +748,9 @@ class WP_Object_Cache {
 	 * @param string $group
 	 * @return mixed
 	 */
-	protected function _get_internal( $key, $group ) {
+	protected function get_internal( $key, $group ) {
 		$value = null;
-		$key = $this->_key( $key, $group );
+		$key = $this->key( $key, $group );
 		if ( isset( $this->cache[ $key ] ) ) {
 			$value = $this->cache[ $key ];
 		}
@@ -767,12 +767,12 @@ class WP_Object_Cache {
 	 * @param string $group
 	 * @param mixed $value
 	 */
-	protected function _set_internal( $key, $group, $value ) {
+	protected function set_internal( $key, $group, $value ) {
 		// LCache expects null to be an empty string
 		if ( is_null( $value ) ) {
 			$value = '';
 		}
-		$key = $this->_key( $key, $group );
+		$key = $this->key( $key, $group );
 		$this->cache[ $key ] = $value;
 	}
 
@@ -782,8 +782,8 @@ class WP_Object_Cache {
 	 * @param string $key
 	 * @param string $group
 	 */
-	protected function _unset_internal( $key, $group ) {
-		$key = $this->_key( $key, $group );
+	protected function unset_internal( $key, $group ) {
+		$key = $this->key( $key, $group );
 		if ( isset( $this->cache[ $key ] ) ) {
 			unset( $this->cache[ $key ] );
 		}
@@ -796,7 +796,7 @@ class WP_Object_Cache {
 	 * @param  string $group The cache group.
 	 * @return string        A properly prefixed APCu cache key.
 	 */
-	protected function _key( $key = '', $group = 'default' ) {
+	protected function key( $key = '', $group = 'default' ) {
 		if ( empty( $group ) ) {
 			$group = 'default';
 		}
@@ -816,7 +816,7 @@ class WP_Object_Cache {
 	 * @param  string $group Cache group.
 	 * @return bool        true if the group is persistent, false if not.
 	 */
-	protected function _should_persist( $group ) {
+	protected function should_persist( $group ) {
 		return empty( $this->non_persistent_groups[ $group ] );
 	}
 
@@ -827,7 +827,7 @@ class WP_Object_Cache {
 	 * @param mixed $args
 	 * @return mixed
 	 */
-	protected function _call_lcache( $method ) {
+	protected function call_lcache( $method ) {
 		global $wpdb;
 
 		$arguments = func_get_args();
