@@ -1,5 +1,9 @@
 Feature: WP LCache
 
+  Scenario: LCache should be configured on Pantheon
+    Given I log in as an admin
+    And I should not see "which is required by WP LCache object cache"
+
   Scenario: LCache debug should include 'LCache Calls'
 
     When I am on the homepage
