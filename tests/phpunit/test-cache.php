@@ -696,6 +696,26 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $wp_object_cache->cache, $new_blank_cache_object->cache );
 	}
 
+	public function test_cache_syncronize() {
+		global $wpdb, $wp_object_cache;
+
+		$key = 'test_cache_syncronize';
+		wp_cache_set( $key, 'foobar' );
+
+		// Mock a event that didn't make it to APCu
+		$wpdb->insert( 'lcache_events', array(
+			'pool'       => $wp_object_cache->lcache->getPool(),
+			'key'        => $key,
+			'created'    => time(),
+			'expiration' => 0,
+			'value'      => serialize( 'abc123' ),
+		) );
+		$this->assertEquals( 'foobar', wp_cache_get( $key ) );
+		// Reloading the object cache will syncronize the event.
+		wp_cache_init();
+		$this->assertEquals( 'abc123', wp_cache_get( $key ) );
+	}
+
 	public function test_wp_cache_replace() {
 		$key  = 'my-key';
 		$val1 = 'first-val';
