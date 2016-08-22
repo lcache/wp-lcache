@@ -896,7 +896,19 @@ class WP_Object_Cache {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		echo '<div class="message error"><p>Warning! LCache library or APCu is unavailable, which is required by WP LCache object cache.</p></div>';
+		// Default generic message
+		$message = 'Warning! LCache library or APCu is unavailable';
+		if ( ! function_exists( 'apcu_sma_info' ) ) {
+			$message = 'Warning! APCu is unavailable';
+		// @codingStandardsIgnoreStart
+		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+		// @codingStandardsIgnoreEnd
+			$message = 'Warning! APCu is not enabled';
+		} else if ( ! class_exists( 'LCacheNullL1' ) ) {
+			$message = 'Warning! LCache library is unavailable';
+		}
+		$message .= ', which is required by WP LCache object cache.';
+		echo '<div class="message error"><p>' . esc_html( $message ) . '</p></div>';
 	}
 
 	/**
