@@ -890,6 +890,32 @@ class WP_Object_Cache {
 	}
 
 	/**
+	 * Get the port or the socket from the host.
+	 *
+	 * @param string $host
+	 * @return array
+	 */
+	private static function get_port_socket_from_host( $host ) {
+		$port = null;
+		$socket = null;
+		$port_or_socket = strstr( $host, ':' );
+		if ( ! empty( $port_or_socket ) ) {
+			$host = substr( $host, 0, strpos( $host, ':' ) );
+			$port_or_socket = substr( $port_or_socket, 1 );
+			if ( 0 !== strpos( $port_or_socket, '/' ) ) {
+				$port = intval( $port_or_socket );
+				$maybe_socket = strstr( $port_or_socket, ':' );
+				if ( ! empty( $maybe_socket ) ) {
+					$socket = substr( $maybe_socket, 1 );
+				}
+			} else {
+				$socket = $port_or_socket;
+			}
+		}
+		return array( $port, $socket );
+	}
+
+	/**
 	 * Admin UI to let the end user know that LCache isn't available
 	 */
 	public function wp_action_admin_notices_warn_missing_lcache() {
@@ -940,23 +966,8 @@ class WP_Object_Cache {
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
 				$l1 = new LCacheAPCuL1();
 			}
-			$port = null;
-			$socket = null;
-			$host = DB_HOST;
-			$port_or_socket = strstr( $host, ':' );
-			if ( ! empty( $port_or_socket ) ) {
-				$host = substr( $host, 0, strpos( $host, ':' ) );
-				$port_or_socket = substr( $port_or_socket, 1 );
-				if ( 0 !== strpos( $port_or_socket, '/' ) ) {
-					$port = intval( $port_or_socket );
-					$maybe_socket = strstr( $port_or_socket, ':' );
-					if ( ! empty( $maybe_socket ) ) {
-						$socket = substr( $maybe_socket, 1 );
-					}
-				} else {
-					$socket = $port_or_socket;
-				}
-			}
+
+			list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
 
 			if ( defined( 'WP_LCACHE_RUNNING_TESTS' ) && WP_LCACHE_RUNNING_TESTS ) {
 				wp_lcache_initialize_database_schema();
