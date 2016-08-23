@@ -378,8 +378,8 @@ class CacheTest extends WP_UnitTestCase {
 			$prefix = $this->cache->blog_prefix;
 		}
 
-		$true_key = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . "$prefix$group:$key" );
-		$this->cache->cache[ $true_key ] = 'beta';
+		$multisite_safe_group = $this->cache->multisite && ! isset( $this->cache->global_groups[ $group ] ) ? $this->cache->blog_prefix . $group : $group;
+		$this->cache->cache[ $multisite_safe_group ][ $key ] = 'beta';
 		$this->assertEquals( 'beta', $this->cache->get( $key, $group ) );
 		$this->assertEquals( 'alpha', $this->cache->get( $key, $group, true ) );
 		$this->assertEquals( 3, $this->cache->cache_hits );

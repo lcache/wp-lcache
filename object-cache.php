@@ -426,7 +426,7 @@ class WP_Object_Cache {
 		}
 
 		$id = $this->key( $key, $group );
-		$result = $this->call_lcache( 'decr', $id, $offset );
+		$result = $this->call_lcache( 'decr', $id, $offset, array( $group ) );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -478,9 +478,8 @@ class WP_Object_Cache {
 	public function delete_group( $group ) {
 
 		$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
-		$lcache_tag = $this->key( '', $group );
 		if ( $this->should_persist( $group ) ) {
-			$result = $this->call_lcache( 'deleteTag', $lcache_tag );
+			$result = $this->call_lcache( 'deleteTag', $group );
 			if ( ! $result ) {
 				return false;
 			}
@@ -607,7 +606,7 @@ class WP_Object_Cache {
 		}
 
 		$id = $this->key( $key, $group );
-		$result = $this->call_lcache( 'incr', $id, $offset );
+		$result = $this->call_lcache( 'incr', $id, $offset, array( $group ) );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -687,7 +686,7 @@ class WP_Object_Cache {
 		}
 
 		$id = $this->key( $key, $group );
-		$this->call_lcache( 'set', $id, $data, $expire );
+		$this->call_lcache( 'set', $id, $data, $expire, array( $group ) );
 		return true;
 	}
 
@@ -759,8 +758,8 @@ class WP_Object_Cache {
 	 * @return boolean
 	 */
 	protected function isset_internal( $key, $group ) {
-		$key = $this->key( $key, $group );
-		return isset( $this->cache[ $key ] );
+		$group = $this->multisite_safe_group( $group );
+		return isset( $this->cache[ $group ][ $key ] );
 	}
 
 	/**
@@ -772,9 +771,9 @@ class WP_Object_Cache {
 	 */
 	protected function get_internal( $key, $group ) {
 		$value = null;
-		$key = $this->key( $key, $group );
-		if ( isset( $this->cache[ $key ] ) ) {
-			$value = $this->cache[ $key ];
+		$group = $this->multisite_safe_group( $group );
+		if ( isset( $this->cache[ $group ][ $key ] ) ) {
+			$value = $this->cache[ $group ][ $key ];
 		}
 		if ( is_object( $value ) ) {
 			return clone $value;
@@ -794,8 +793,8 @@ class WP_Object_Cache {
 		if ( is_null( $value ) ) {
 			$value = '';
 		}
-		$key = $this->key( $key, $group );
-		$this->cache[ $key ] = $value;
+		$group = $this->multisite_safe_group( $group );
+		$this->cache[ $group ][ $key ] = $value;
 	}
 
 	/**
@@ -805,9 +804,9 @@ class WP_Object_Cache {
 	 * @param string $group
 	 */
 	protected function unset_internal( $key, $group ) {
-		$key = $this->key( $key, $group );
-		if ( isset( $this->cache[ $key ] ) ) {
-			unset( $this->cache[ $key ] );
+		$group = $this->multisite_safe_group( $group );
+		if ( isset( $this->cache[ $group ][ $key ] ) ) {
+			unset( $this->cache[ $group ][ $key ] );
 		}
 	}
 
@@ -830,6 +829,16 @@ class WP_Object_Cache {
 		}
 
 		return preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . "$prefix$group:$key" );
+	}
+
+	/**
+	 * Utility function to generate a multisite-safe group name
+	 *
+	 * @param string $group
+	 * @return string
+	 */
+	protected function multisite_safe_group( $group ) {
+		return $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
 	}
 
 	/**
@@ -878,7 +887,7 @@ class WP_Object_Cache {
 					if ( $retval < 0 ) {
 						$retval = 0;
 					}
-					$this->lcache->set( $arguments[0], $retval );
+					$this->lcache->set( $arguments[0], $retval, null, $arguments[2] );
 					break;
 
 				default:
