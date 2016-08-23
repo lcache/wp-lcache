@@ -479,7 +479,7 @@ class WP_Object_Cache {
 
 		$multisite_safe_group = $this->multisite_safe_group( $group );
 		if ( $this->should_persist( $group ) ) {
-			$result = $this->call_lcache( 'deleteTag', $group );
+			$result = $this->call_lcache( 'deleteTag', $multisite_safe_group );
 			if ( ! $result ) {
 				return false;
 			}
