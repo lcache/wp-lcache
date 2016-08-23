@@ -15,6 +15,13 @@ default:
       contexts:
         - Behat\MinkExtension\Context\MinkContext
         - PantheonSystems\PantheonWordPressUpstreamTests\Behat\AdminLogIn
+    performance:
+      paths:
+        - performance-tests/behat
+      contexts:
+        - Behat\MinkExtension\Context\MinkContext
+        - PantheonSystems\PantheonWordPressUpstreamTests\Behat\AdminLogIn
+
   extensions:
     Behat\MinkExtension:
       # base_url set by ENV
