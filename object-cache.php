@@ -470,6 +470,28 @@ class WP_Object_Cache {
 	}
 
 	/**
+	 * Remove the contents of all cache keys in the group.
+	 *
+	 * @param string $group Where the cache contents are grouped.
+	 * @return boolean True on success, false on failure.
+	 */
+	public function delete_group( $group ) {
+
+		$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
+		$lcache_tag = $this->key( '', $group );
+		if ( $this->should_persist( $group ) ) {
+			$result = $this->call_lcache( 'deleteTag', $lcache_tag );
+			if ( ! $result ) {
+				return false;
+			}
+		} else if ( ! $this->should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
+			return false;
+		}
+		unset( $this->cache[ $multisite_safe_group ] );
+		return true;
+	}
+
+	/**
 	 * Clears the object cache of all data.
 	 *
 	 * By default, this will flush the session cache as well as LCache, but we
