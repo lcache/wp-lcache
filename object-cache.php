@@ -270,70 +270,64 @@ class WP_Object_Cache {
 	 * Holds the cached objects
 	 *
 	 * @var array
-	 * @access private
 	 */
-	var $cache = array();
+	public $cache = array();
 
 	/**
 	 * The amount of times the cache data was already stored in the cache.
 	 *
-	 * @access private
 	 * @var int
 	 */
-	var $cache_hits = 0;
+	public $cache_hits = 0;
 
 	/**
 	 * Amount of times the cache did not have the request in cache
 	 *
 	 * @var int
-	 * @access public
 	 */
-	var $cache_misses = 0;
+	public $cache_misses = 0;
 
 	/**
 	 * A count of calls made to LCache
 	 *
-	 * @access private
 	 * @var int
 	 */
-	var $lcache_calls = array();
+	public $lcache_calls = array();
 
 	/**
 	 * List of global groups
 	 *
 	 * @var array
-	 * @access protected
 	 */
-	var $global_groups = array();
+	protected $global_groups = array();
 
 	/**
 	 * List of non-persistent groups
 	 *
 	 * @var array
-	 * @access protected
 	 */
-	var $non_persistent_groups = array();
+	protected $non_persistent_groups = array();
 
 	/**
 	 * The blog prefix to prepend to keys in non-global groups.
 	 *
 	 * @var int
-	 * @access private
 	 */
-	var $blog_prefix;
+	private $blog_prefix;
 
 	/**
 	 * LCache instance to interact with
 	 *
-	 * @var bool
-	 * @access private
+	 * @var mixed
 	 */
-	var $lcache = null;
+	public $lcache = null;
 
 	/**
 	 * The last triggered error
+	 *
+	 * @var string
 	 */
-	var $last_triggered_error = '';
+	public $last_triggered_error = '';
 
 	/**
 	 * Adds data to the cache if it doesn't already exist.
@@ -714,7 +708,9 @@ class WP_Object_Cache {
 	/**
 	 * Utility function to determine whether a key exists in the cache.
 	 *
-	 * @access protected
+	 * @param string $key
+	 * @param string $group
+	 * @return boolean
 	 */
 	protected function exists( $key, $group ) {
 		if ( $this->isset_internal( $key, $group ) ) {
