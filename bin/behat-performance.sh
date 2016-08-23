@@ -5,8 +5,11 @@ set -ex
 
 ./bin/behat-check-required.sh
 
-
+terminus wp "cache flush"
 export WORDPRESS_ADMIN_USERNAME=admin2
+
+# #### wipe
+yes | terminus site wipe
 
 ###
 # Create a new environment for this particular test run.
@@ -39,41 +42,26 @@ git push origin $TERMINUS_ENV -f
 
 
 
-#### wipe
-yes | terminus site wipe
-
-#### Install core
-
-###
-# Set up WordPress, theme, and plugins for the test run
-###
-# Silence output so as not to show the password.
-{
-  terminus wp "core install --title=$TERMINUS_ENV-$TERMINUS_SITE --url=$PANTHEON_SITE_URL --admin_user=$WORDPRESS_ADMIN_USERNAME --admin_email=wp-lcache@getpantheon.com --admin_password=$WORDPRESS_ADMIN_PASSWORD"
-} &> /dev/null
-terminus  site  clear-cache
-terminus wp "cache flush"
-
-#### Run test suites
-cd $BASH_DIR/..
-./vendor/bin/behat --suite=core --strict
-#./vendor/bin/behat --suite=performance --strict
 
 
+ #### Install core
+
+ ###
+ # Set up WordPress, theme, and plugins for the test run
+ ###
+ # Silence output so as not to show the password.
+ {
+   terminus wp "core install --title=$TERMINUS_ENV-$TERMINUS_SITE --url=$PANTHEON_SITE_URL --admin_user=$WORDPRESS_ADMIN_USERNAME --admin_email=wp-lcache@getpantheon.com --admin_password=$WORDPRESS_ADMIN_PASSWORD"
+ } &> /dev/null
+ terminus  site  clear-cache
+ terminus wp "cache flush"
+
+ #### Run test suites
+ cd $BASH_DIR/..
+ ./vendor/bin/behat --suite=core --strict
+ ./vendor/bin/behat --suite=performance --strict
 
 
-
-
-
-
-#
-# yes | terminus site wipe
-#   terminus wp "core install --title=$TERMINUS_ENV-$TERMINUS_SITE --url=$PANTHEON_SITE_URL --admin_user=$WORDPRESS_ADMIN_USERNAME --admin_email=wp-lcache@getpantheon.com --admin_password=$WORDPRESS_ADMIN_PASSWORD"
-#   terminus  site  clear-cache
-#   terminus wp "cache flush"
-# ./vendor/bin/behat --suite=core --strict
-
-# exit 0;
 
 
 
@@ -115,7 +103,8 @@ cd $BASH_DIR/..
 
 
 #### Wipe
-
+terminus wp "cache flush"
+terminus  site  clear-cache
 #### wipe
 yes | terminus site wipe
 #### Install core
@@ -167,20 +156,20 @@ terminus wp "cache flush"
 terminus  site  clear-cache
 terminus wp "plugin activate wp-lcache"
 
- terminus  wp  "user delete $WORDPRESS_ADMIN_USERNAME   --yes"
+ #terminus  wp  "user delete $WORDPRESS_ADMIN_USERNAME   --yes"
 
 
-export WORDPRESS_ADMIN_USERNAME=admin3
+#export WORDPRESS_ADMIN_USERNAME=admin3
 
 
-echo $WORDPRESS_ADMIN_USERNAME
+#echo $WORDPRESS_ADMIN_USERNAME
 
 
 
 
- terminus  wp  "user  create   $WORDPRESS_ADMIN_USERNAME  test@example.com  --role=administrator  --user_pass=$WORDPRESS_ADMIN_PASSWORD"
+ #terminus  wp  "user  create   $WORDPRESS_ADMIN_USERNAME  test@example.com  --role=administrator  --user_pass=$WORDPRESS_ADMIN_PASSWORD"
 
-terminus  wp "user list"
+#terminus  wp "user list"
 
 
 
@@ -188,7 +177,7 @@ terminus  wp "user list"
 cd $BASH_DIR/..
 ./vendor/bin/behat --suite=default --strict
 ./vendor/bin/behat --suite=core --strict
-#./vendor/bin/behat --suite=performance --strict
+./vendor/bin/behat --suite=performance --strict
 
 
 
