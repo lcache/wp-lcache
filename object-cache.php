@@ -426,7 +426,8 @@ class WP_Object_Cache {
 		}
 
 		$id = $this->key( $key, $group );
-		$result = $this->call_lcache( 'decr', $id, $offset, array( $group ) );
+		$multisite_safe_group = $this->multisite_safe_group( $group );
+		$result = $this->call_lcache( 'decr', $id, $offset, array( $multisite_safe_group ) );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -606,7 +607,8 @@ class WP_Object_Cache {
 		}
 
 		$id = $this->key( $key, $group );
-		$result = $this->call_lcache( 'incr', $id, $offset, array( $group ) );
+		$multisite_safe_group = $this->multisite_safe_group( $group );
+		$result = $this->call_lcache( 'incr', $id, $offset, array( $multisite_safe_group ) );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -686,7 +688,8 @@ class WP_Object_Cache {
 		}
 
 		$id = $this->key( $key, $group );
-		$this->call_lcache( 'set', $id, $data, $expire, array( $group ) );
+		$multisite_safe_group = $this->multisite_safe_group( $group );
+		$this->call_lcache( 'set', $id, $data, $expire, array( $multisite_safe_group ) );
 		return true;
 	}
 
@@ -904,15 +907,13 @@ class WP_Object_Cache {
 		// Mock expected behavior from APCu for these methods
 		switch ( $method ) {
 			case 'incr':
-				$group = $this->multisite_safe_group( $arguments[2][0] );
-				$val = $this->cache[ $group ][ $arguments[0] ] + $arguments[1];
+				$val = $this->cache[ $arguments[2][0] ][ $arguments[0] ] + $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
 				return $val;
 			case 'decr':
-				$group = $this->multisite_safe_group( $arguments[2][0] );
-				$val = $this->cache[ $group ][ $arguments[0] ] - $arguments[1];
+				$val = $this->cache[ $arguments[2][0] ][ $arguments[0] ] - $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
