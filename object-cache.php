@@ -425,9 +425,7 @@ class WP_Object_Cache {
 			return $existing;
 		}
 
-		$id = $this->key( $key, $group );
-		$multisite_safe_group = $this->multisite_safe_group( $group );
-		$result = $this->call_lcache( 'decr', $id, $offset, array( $multisite_safe_group ) );
+		$result = $this->call_lcache( 'decr', array( $key, $group ), $offset );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -459,8 +457,7 @@ class WP_Object_Cache {
 		}
 
 		if ( $this->should_persist( $group ) ) {
-			$id = $this->key( $key, $group );
-			$result = $this->call_lcache( 'delete', $id );
+			$result = $this->call_lcache( 'delete', array( $key, $group ) );
 			if ( ! $result ) {
 				return false;
 			}
@@ -480,7 +477,7 @@ class WP_Object_Cache {
 
 		$multisite_safe_group = $this->multisite_safe_group( $group );
 		if ( $this->should_persist( $group ) ) {
-			$result = $this->call_lcache( 'deleteTag', $multisite_safe_group );
+			$result = $this->call_lcache( 'delete', array( null, $group ) );
 			if ( ! $result ) {
 				return false;
 			}
@@ -506,7 +503,7 @@ class WP_Object_Cache {
 	public function flush( $lcache = true ) {
 		$this->cache = array();
 		if ( $lcache ) {
-			$this->call_lcache( 'delete' );
+			$this->call_lcache( 'delete', array( null, null ) );
 		}
 
 		return true;
@@ -549,8 +546,7 @@ class WP_Object_Cache {
 			return false;
 		}
 
-		$id = $this->key( $key, $group );
-		$value = $this->call_lcache( 'get', $id );
+		$value = $this->call_lcache( 'get', array( $key, $group ) );
 
 		// LCache returns `null` when the key doesn't exist
 		if ( null === $value ) {
@@ -606,9 +602,7 @@ class WP_Object_Cache {
 			return $existing;
 		}
 
-		$id = $this->key( $key, $group );
-		$multisite_safe_group = $this->multisite_safe_group( $group );
-		$result = $this->call_lcache( 'incr', $id, $offset, array( $multisite_safe_group ) );
+		$result = $this->call_lcache( 'incr', array( $key, $group ), $offset );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -687,9 +681,7 @@ class WP_Object_Cache {
 			$data = serialize( $data );
 		}
 
-		$id = $this->key( $key, $group );
-		$multisite_safe_group = $this->multisite_safe_group( $group );
-		$this->call_lcache( 'set', $id, $data, $expire, array( $multisite_safe_group ) );
+		$this->call_lcache( 'set', array( $key, $group ), $data, $expire );
 		return true;
 	}
 
@@ -749,8 +741,7 @@ class WP_Object_Cache {
 			return false;
 		}
 
-		$id = $this->key( $key, $group );
-		return $this->call_lcache( 'exists', $id );
+		return $this->call_lcache( 'exists', array( $key, $group ) );
 	}
 
 	/**
@@ -761,7 +752,6 @@ class WP_Object_Cache {
 	 * @return boolean
 	 */
 	protected function isset_internal( $key, $group ) {
-		$key = $this->key( $key, $group );
 		$group = $this->multisite_safe_group( $group );
 		return isset( $this->cache[ $group ][ $key ] );
 	}
@@ -775,7 +765,6 @@ class WP_Object_Cache {
 	 */
 	protected function get_internal( $key, $group ) {
 		$value = null;
-		$key = $this->key( $key, $group );
 		$group = $this->multisite_safe_group( $group );
 		if ( isset( $this->cache[ $group ][ $key ] ) ) {
 			$value = $this->cache[ $group ][ $key ];
@@ -798,7 +787,6 @@ class WP_Object_Cache {
 		if ( is_null( $value ) ) {
 			$value = '';
 		}
-		$key = $this->key( $key, $group );
 		$group = $this->multisite_safe_group( $group );
 		$this->cache[ $group ][ $key ] = $value;
 	}
@@ -810,7 +798,6 @@ class WP_Object_Cache {
 	 * @param string $group
 	 */
 	protected function unset_internal( $key, $group ) {
-		$key = $this->key( $key, $group );
 		$group = $this->multisite_safe_group( $group );
 		if ( isset( $this->cache[ $group ][ $key ] ) ) {
 			unset( $this->cache[ $group ][ $key ] );
@@ -876,16 +863,14 @@ class WP_Object_Cache {
 				$this->lcache_calls[ $method ] = 0;
 			}
 			$this->lcache_calls[ $method ]++;
+			$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+			$safe_group = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . $multisite_safe_group );
+			$address = new LCacheAddress( $safe_group, $arguments[0][0] );
 			// Some LCache methods don't exist directly, so we need to mock them
 			switch ( $method ) {
-				case 'exists':
-					$retval = call_user_func_array( array( $this->lcache, 'get' ), $arguments );
-					$retval = ! is_null( $retval );
-					break;
-
 				case 'incr':
 				case 'decr':
-					$retval = $this->lcache->get( $arguments[0] );
+					$retval = $this->lcache->get( $address );
 					if ( 'incr' === $method ) {
 						$retval += $arguments[1];
 					} else if ( 'decr' === $method ) {
@@ -894,11 +879,15 @@ class WP_Object_Cache {
 					if ( $retval < 0 ) {
 						$retval = 0;
 					}
-					$this->lcache->set( $arguments[0], $retval, null, $arguments[2] );
+					$this->lcache->set( $address, $retval );
 					break;
 
 				default:
-					$retval = call_user_func_array( array( $this->lcache, $method ), $arguments );
+					$passed_args = $arguments;
+					if ( isset( $passed_args[0] ) ) {
+						$passed_args[0] = $address;
+					}
+					$retval = call_user_func_array( array( $this->lcache, $method ), $passed_args );
 					break;
 			}
 			return $retval;
@@ -907,20 +896,24 @@ class WP_Object_Cache {
 		// Mock expected behavior from APCu for these methods
 		switch ( $method ) {
 			case 'incr':
-				$val = $this->cache[ $arguments[2][0] ][ $arguments[0] ] + $arguments[1];
+				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+				$val = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] + $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
 				return $val;
 			case 'decr':
-				$val = $this->cache[ $arguments[2][0] ][ $arguments[0] ] - $arguments[1];
+				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+				$val = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] - $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
 				return $val;
-			case 'deleteTag':
-				return isset( $this->cache[ $arguments[0] ] );
 			case 'delete':
+				if ( isset( $arguments[0] ) && is_null( $arguments[0][0] ) ) {
+					$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+					return isset( $this->cache[ $multisite_safe_group ] );
+				}
 				return true;
 			case 'exists':
 			case 'get':
