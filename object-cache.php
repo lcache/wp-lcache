@@ -911,6 +911,8 @@ class WP_Object_Cache {
 					$val = 0;
 				}
 				return $val;
+			case 'deleteTag':
+				return isset( $this->cache[ $arguments[0] ] );
 			case 'delete':
 				return true;
 			case 'exists':
