@@ -477,7 +477,7 @@ class WP_Object_Cache {
 	 */
 	public function delete_group( $group ) {
 
-		$multisite_safe_group = $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
+		$multisite_safe_group = $this->multisite_safe_group( $group );
 		if ( $this->should_persist( $group ) ) {
 			$result = $this->call_lcache( 'deleteTag', $group );
 			if ( ! $result ) {
