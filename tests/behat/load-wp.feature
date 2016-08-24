@@ -1,8 +1,8 @@
 Feature: Load WordPress
 
-  Scenario: Verify that WordPress loads with the plugin active
-    Given I am on the homepage
-    Then I should see "Hello World"
+Scenario: Verify that WordPress loads with the plugin active
+  Given I am on the homepage
+  Then I should see "Hello World"
 
   Scenario: Verify that a user can publish a blog post
     Given I log in as an admin
