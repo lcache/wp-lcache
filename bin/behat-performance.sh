@@ -97,9 +97,12 @@ git push origin $TERMINUS_ENV -f
 # Set up WordPress, theme, and plugins for the test run
 ###
 # Silence output so as not to show the password.
-{
+# {
+#   terminus wp "core install --title=$TERMINUS_ENV-$TERMINUS_SITE --url=$PANTHEON_SITE_URL --admin_user=$WORDPRESS_ADMIN_USERNAME --admin_email=wp-lcache@getpantheon.com --admin_password=$WORDPRESS_ADMIN_PASSWORD"
+# } &> /dev/null
+
+
   terminus wp "core install --title=$TERMINUS_ENV-$TERMINUS_SITE --url=$PANTHEON_SITE_URL --admin_user=$WORDPRESS_ADMIN_USERNAME --admin_email=wp-lcache@getpantheon.com --admin_password=$WORDPRESS_ADMIN_PASSWORD"
-} &> /dev/null
 
 terminus wp "cache flush"
 terminus  site  clear-cache
