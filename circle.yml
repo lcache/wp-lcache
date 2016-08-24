@@ -3,7 +3,8 @@ machine:
     # https://circleci.com/docs/environment#php
     version: 7.0.7
   environment:
-    TERMINUS_ENV: performance
+    #TERMINUS_ENV: performance
+    TERMINUS_ENV: perf-$CIRCLE_BUILD_NUM
     TERMINUS_SITE: wp-lcache
     WORDPRESS_ADMIN_USERNAME: pantheon
     # A random password is set in the dependencies:pre stage as a text file.
