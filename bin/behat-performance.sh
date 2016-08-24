@@ -4,15 +4,13 @@ set -ex
 
 ./bin/behat-check-required.sh
 
-terminus wp "cache flush"
-
-# #### wipe
-yes | terminus site wipe
-
 ###
 # Create a new environment for this particular test run.
 ###
 terminus site create-env --to-env=$TERMINUS_ENV --from-env=dev
+
+# #### wipe
+yes | terminus site wipe
 
 ###
 # Get all necessary environment details.
