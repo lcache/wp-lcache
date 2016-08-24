@@ -9,7 +9,7 @@ set -ex
 ###
 terminus site create-env --to-env=$TERMINUS_ENV --from-env=dev
 
-# #### wipe
+### wipe
 yes | terminus site wipe
 
 ###
@@ -26,11 +26,23 @@ export BEHAT_PARAMS='{"extensions" : {"Behat\\MinkExtension" : {"base_url" : "ht
 ###
 terminus site set-connection-mode --mode=git
 rm -rf $PREPARE_DIR
-git clone $PANTHEON_GIT_URL $PREPARE_DIR
+git clone -b $TERMINUS_ENV $PANTHEON_GIT_URL $PREPARE_DIR
+
+# The purpose of this section is to ensure that two CircleCI build are not
+# trying to run tests on the same multidev environment at the same time.
+IN_PROGRESS_INDICATOR_FILE="$PREPARE_DIR/performance_test_in_progress.txt"
+echo $IN_PROGRESS_INDICATOR_FILE
+if [ -f $IN_PROGRESS_INDICATOR_FILE ];
+  then echo "Another process or build is already running tests on this environment. Exiting.";
+  exit 0
+fi
+
 cd $PREPARE_DIR
-git checkout -b $TERMINUS_ENV
+echo "Build in progress" > performance_test_in_progress.txt
+git add performance_test_in_progress.txt
+git commit -m "Removing performance_test_in_progress.txt"
 ##### #Force the multidev back to match master
-git push origin $TERMINUS_ENV -f
+git push origin $TERMINUS_ENV
 
  ###
  # Set up WordPress, theme, and plugins for the test run
@@ -96,3 +108,10 @@ cd $BASH_DIR/..
 ./vendor/bin/behat --suite=default --strict
 ./vendor/bin/behat --suite=core --strict
 ./vendor/bin/behat --suite=performance --strict
+
+# Clean up by restoring this branch to match master
+cd $PREPARE_DIR
+git checkout master
+git branch -D $TERMINUS_ENV
+git checkout -b $TERMINUS_ENV
+git push origin $TERMINUS_ENV -f
