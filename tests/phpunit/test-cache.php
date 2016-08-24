@@ -659,7 +659,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertFalse( $this->cache->get( $key2, $group ) );
 		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
 
-		$this->assertFalse( $this->cache->delete_group( $group ) );
+		$this->assertTrue( $this->cache->delete_group( $group ) );
 	}
 
 	public function test_delete_group_non_persistent() {
@@ -715,7 +715,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertFalse( wp_cache_get( $key2, $group ) );
 		$this->assertEquals( $val3, wp_cache_get( $key3, $group2 ) );
 
-		$this->assertFalse( wp_cache_delete_group( $group ) );
+		$this->assertTrue( wp_cache_delete_group( $group ) );
 
 	}
 
