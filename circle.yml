@@ -40,4 +40,4 @@ test:
   override:
     - ./bin/behat-performance.sh
   post:
-    #- ./bin/behat-cleanup.sh
+    - ./bin/behat-performance-cleanup.sh

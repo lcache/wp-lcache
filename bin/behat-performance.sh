@@ -110,10 +110,3 @@ cd $BASH_DIR/..
 ./vendor/bin/behat --suite=default --strict
 ./vendor/bin/behat --suite=core --strict
 ./vendor/bin/behat --suite=performance --strict
-
-# Clean up by restoring this branch to match master
-cd $PREPARE_DIR
-git checkout master
-git branch -D $TERMINUS_ENV
-git checkout -b $TERMINUS_ENV
-git push origin $TERMINUS_ENV -f
