@@ -37,7 +37,7 @@ fi
 cd $PREPARE_DIR
 echo "Build in progress" > performance_test_in_progress.txt
 git add performance_test_in_progress.txt
-git commit -m "Removing performance_test_in_progress.txt"
+git commit -m "Starting perfomance test on plain WordPress core."
 ##### #Force the multidev back to match master
 git push origin $TERMINUS_ENV
 
@@ -89,7 +89,7 @@ cp $BASH_DIR/fixtures/lcache-debug.php $PREPARE_DIR/wp-content/mu-plugins/lcache
 ###
 cd $PREPARE_DIR
 git add wp-content
-git commit -m "Include WP LCache and its configuration files"
+git commit -m "Starting performance test with wp-lcache installed"
 git push origin $TERMINUS_ENV -f
 
 
