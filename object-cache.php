@@ -477,10 +477,7 @@ class WP_Object_Cache {
 
 		$multisite_safe_group = $this->multisite_safe_group( $group );
 		if ( $this->should_persist( $group ) ) {
-			$result = $this->call_lcache( 'delete', array( null, $group ) );
-			if ( ! $result ) {
-				return false;
-			}
+			$this->call_lcache( 'delete', array( null, $group ) );
 		} else if ( ! $this->should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
 			return false;
 		}
@@ -910,10 +907,6 @@ class WP_Object_Cache {
 				}
 				return $val;
 			case 'delete':
-				if ( isset( $arguments[0] ) && is_null( $arguments[0][0] ) ) {
-					$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
-					return isset( $this->cache[ $multisite_safe_group ] );
-				}
 				return true;
 			case 'exists':
 			case 'get':
