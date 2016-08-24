@@ -9,9 +9,6 @@ set -ex
 ###
 terminus site create-env --to-env=$TERMINUS_ENV --from-env=dev
 
-### wipe
-yes | terminus site wipe
-
 ###
 # Get all necessary environment details.
 ###
@@ -44,6 +41,9 @@ git commit -m "Removing performance_test_in_progress.txt"
 ##### #Force the multidev back to match master
 git push origin $TERMINUS_ENV
 
+### wipe
+yes | terminus site wipe
+
  ###
  # Set up WordPress, theme, and plugins for the test run
  ###
@@ -68,6 +68,8 @@ yes | terminus site wipe
 ###
 # Add the copy of this plugin itself to the environment
 ###
+# Ensure this branch has the latest from master
+git merge origin/master
 rm -rf $PREPARE_DIR/wp-content/plugins/wp-lcache
 rm -rf $PREPARE_DIR/wp-content/object-cache.php
 cd $BASH_DIR/..
