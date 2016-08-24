@@ -34,8 +34,8 @@ dependencies:
 
 test:
   pre:
-    - ./bin/behat-prepare.sh
+    #- ./bin/behat-prepare.sh
   override:
-    - ./bin/behat-test.sh
+    - ./bin/behat-performance.sh
   post:
     #- ./bin/behat-cleanup.sh
