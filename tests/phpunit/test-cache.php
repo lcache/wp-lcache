@@ -372,14 +372,8 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
 		// Duplicate of _set_internal()
-		if ( ! empty( $this->cache->global_groups[ $group ] ) ) {
-			$prefix = $this->cache->global_prefix;
-		} else {
-			$prefix = $this->cache->blog_prefix;
-		}
-
-		$true_key = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . "$prefix$group:$key" );
-		$this->cache->cache[ $true_key ] = 'beta';
+		$multisite_safe_group = $this->cache->multisite && ! isset( $this->cache->global_groups[ $group ] ) ? $this->cache->blog_prefix . $group : $group;
+		$this->cache->cache[ $multisite_safe_group ][ $key ] = 'beta';
 		$this->assertEquals( 'beta', $this->cache->get( $key, $group ) );
 		$this->assertEquals( 'alpha', $this->cache->get( $key, $group, true ) );
 		$this->assertEquals( 3, $this->cache->cache_hits );
@@ -639,6 +633,90 @@ class CacheTest extends WP_UnitTestCase {
 		// $this->assertTrue( wp_cache_delete( $key, 'default', true ) );
 
 		$this->assertFalse( wp_cache_delete( $key, 'default' ) );
+	}
+
+	public function test_delete_group() {
+		$key1 = rand_str();
+		$val1 = rand_str();
+		$key2 = rand_str();
+		$val2 = rand_str();
+		$key3 = rand_str();
+		$val3 = rand_str();
+		$group = 'foo';
+		$group2 = 'bar';
+
+		// Set up the values
+		$this->cache->set( $key1, $val1, $group );
+		$this->cache->set( $key2, $val2, $group );
+		$this->cache->set( $key3, $val3, $group2 );
+		$this->assertEquals( $val1, $this->cache->get( $key1, $group ) );
+		$this->assertEquals( $val2, $this->cache->get( $key2, $group ) );
+		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
+
+		$this->assertTrue( $this->cache->delete_group( $group ) );
+
+		$this->assertFalse( $this->cache->get( $key1, $group ) );
+		$this->assertFalse( $this->cache->get( $key2, $group ) );
+		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
+
+		$this->assertFalse( $this->cache->delete_group( $group ) );
+	}
+
+	public function test_delete_group_non_persistent() {
+		$key1 = rand_str();
+		$val1 = rand_str();
+		$key2 = rand_str();
+		$val2 = rand_str();
+		$key3 = rand_str();
+		$val3 = rand_str();
+		$group = 'foo';
+		$group2 = 'bar';
+		$this->cache->add_non_persistent_groups( array( $group, $group2 ) );
+
+		// Set up the values
+		$this->cache->set( $key1, $val1, $group );
+		$this->cache->set( $key2, $val2, $group );
+		$this->cache->set( $key3, $val3, $group2 );
+		$this->assertEquals( $val1, $this->cache->get( $key1, $group ) );
+		$this->assertEquals( $val2, $this->cache->get( $key2, $group ) );
+		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
+
+		$this->assertTrue( $this->cache->delete_group( $group ) );
+
+		$this->assertFalse( $this->cache->get( $key1, $group ) );
+		$this->assertFalse( $this->cache->get( $key2, $group ) );
+		$this->assertEquals( $val3, $this->cache->get( $key3, $group2 ) );
+
+		$this->assertFalse( $this->cache->delete_group( $group ) );
+	}
+
+	public function test_wp_cache_delete_group() {
+
+		$key1 = rand_str();
+		$val1 = rand_str();
+		$key2 = rand_str();
+		$val2 = rand_str();
+		$key3 = rand_str();
+		$val3 = rand_str();
+		$group = 'foo';
+		$group2 = 'bar';
+
+		// Set up the values
+		wp_cache_set( $key1, $val1, $group );
+		wp_cache_set( $key2, $val2, $group );
+		wp_cache_set( $key3, $val3, $group2 );
+		$this->assertEquals( $val1, wp_cache_get( $key1, $group ) );
+		$this->assertEquals( $val2, wp_cache_get( $key2, $group ) );
+		$this->assertEquals( $val3, wp_cache_get( $key3, $group2 ) );
+
+		$this->assertTrue( wp_cache_delete_group( $group ) );
+
+		$this->assertFalse( wp_cache_get( $key1, $group ) );
+		$this->assertFalse( wp_cache_get( $key2, $group ) );
+		$this->assertEquals( $val3, wp_cache_get( $key3, $group2 ) );
+
+		$this->assertFalse( wp_cache_delete_group( $group ) );
+
 	}
 
 	public function test_switch_to_blog() {
