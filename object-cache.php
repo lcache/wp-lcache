@@ -1,5 +1,11 @@
 <?php
 
+use \LCache\LCache\LCacheAddress;
+use \LCache\LCache\LCacheAPCuL1;
+use \LCache\LCache\LCacheDatabaseL2;
+use \LCache\LCache\LCacheIntegrated;
+use \LCache\LCache\LCacheNullL1;
+
 // WP LCache
 // This file needs to be symlinked or copied to wp-content/object-cache.php
 // If copied, you'll need to set the WP_LCACHE_LIB_PATH constant to the LCache directory
@@ -956,7 +962,7 @@ class WP_Object_Cache {
 		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
 		// @codingStandardsIgnoreEnd
 			$message = 'Warning! APCu is not enabled';
-		} else if ( ! class_exists( 'LCacheNullL1' ) ) {
+		} else if ( ! class_exists( '\LCache\LCache\LCacheNullL1' ) ) {
 			$message = 'Warning! LCache library is unavailable';
 		}
 		$message .= ', which is required by WP LCache object cache.';
@@ -985,7 +991,7 @@ class WP_Object_Cache {
 
 		// apcu_sma_info() triggers a warning when APCu is disabled
 		// @codingStandardsIgnoreStart
-		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( 'LCacheNullL1' ) ) {
+		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( '\LCache\LCache\LCacheNullL1' ) ) {
 		// @codingStandardsIgnoreEnd
 			$l1 = new LCacheNullL1();
 			// APCu isn't available in CLI context unless explicitly enabled
