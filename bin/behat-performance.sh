@@ -57,7 +57,10 @@ yes | terminus site wipe
  #### Run test suites
  cd $BASH_DIR/..
  ./vendor/bin/behat --suite=core --strict
- ./vendor/bin/behat --suite=performance --strict
+for i in $(seq 200); do
+  echo "Peformance test pass $i with Core"
+./vendor/bin/behat --suite=performance --strict
+done
 
 #### Wipe
 terminus wp "cache flush"
@@ -112,4 +115,8 @@ terminus wp "plugin activate wp-lcache"
 cd $BASH_DIR/..
 ./vendor/bin/behat --suite=default --strict
 ./vendor/bin/behat --suite=core --strict
+
+for i in $(seq 200); do
+  echo "Peformance test pass $i with LCache"
 ./vendor/bin/behat --suite=performance --strict
+done

@@ -52,48 +52,32 @@ class PerformanceHelpers implements Context, SnippetAcceptingContext {
   public function iOpenTheLinksToAllHomepagePosts()
   {
 
-
-
+    $this->minkContext->visit("/");
 
 
     $next_page_exists = TRUE;
-
+    $next_page_url ='';
 
     while($next_page_exists) {
 
-
-
       $page = $this->minkContext->getSession()->getPage();
       $next_page_link = $page->find('css', '.next.page-numbers');
-      //$this->openAllPostLinksOnASinglePage($page);
 
-
-    //  print_r($next_page_link);
 
       if ($next_page_link) {
         $next_page_url = $next_page_link->getAttribute('href');
-
-        print_r("
-
-
-
-
-        NEXT PAGE!
-        $next_page_url
-
-        ");
-
-
-        $this->minkContext->visit($next_page_url);
       }
       else {
         $next_page_exists = FALSE;
       }
 
+      $this->openAllPostLinksOnASinglePage($page);
 
+      if (!empty($next_page_link)) {
+        $this->minkContext->visit($next_page_url);
+      }
     }
-
-//
+    echo "last page visited was $next_page_url";
   }
 
 
@@ -109,14 +93,12 @@ class PerformanceHelpers implements Context, SnippetAcceptingContext {
 
       $this->minkContext->visit($post_url);
 
-      echo "\n";
-      echo $this->minkContext->getSession()->getPage()->find('css', 'h1.entry-title')->getHtml();
-      echo "\n";
-      $this->minkContext->printCurrentUrl();
-      echo "\n";
+//      echo "\n";
+//      echo $this->minkContext->getSession()->getPage()->find('css', 'h1.entry-title')->getHtml();
+//      echo "\n";
+//      $this->minkContext->printCurrentUrl();
+//      echo "\n";
     }
-//    print_r($post_urls);
-
 
   }
 
@@ -124,7 +106,6 @@ class PerformanceHelpers implements Context, SnippetAcceptingContext {
 
   protected function getAllPostURLs($page) {
 
-    //    $this->minkContext->printLastResponse();
     $post_links = $page->findAll('css', 'article h2 a');
 
     $post_urls = [];
