@@ -45,4 +45,94 @@ class PerformanceHelpers implements Context, SnippetAcceptingContext {
   	return $str;
   }
 
+
+  /**
+   * @When I open the links to all homepage posts
+   */
+  public function iOpenTheLinksToAllHomepagePosts()
+  {
+
+
+
+
+
+    $next_page_exists = TRUE;
+
+
+    while($next_page_exists) {
+
+
+
+      $page = $this->minkContext->getSession()->getPage();
+      $next_page_link = $page->find('css', '.next.page-numbers');
+      //$this->openAllPostLinksOnASinglePage($page);
+
+
+    //  print_r($next_page_link);
+
+      if ($next_page_link) {
+        $next_page_url = $next_page_link->getAttribute('href');
+
+        print_r("
+
+
+
+
+        NEXT PAGE!
+        $next_page_url
+
+        ");
+
+
+        $this->minkContext->visit($next_page_url);
+      }
+      else {
+        $next_page_exists = FALSE;
+      }
+
+
+    }
+
+//
+  }
+
+
+
+
+  protected function openAllPostLinksOnASinglePage($page) {
+
+
+
+    $post_urls = $this->getAllPostURLs($page);
+
+    foreach ($post_urls as $post_url) {
+
+      $this->minkContext->visit($post_url);
+
+      echo "\n";
+      echo $this->minkContext->getSession()->getPage()->find('css', 'h1.entry-title')->getHtml();
+      echo "\n";
+      $this->minkContext->printCurrentUrl();
+      echo "\n";
+    }
+//    print_r($post_urls);
+
+
+  }
+
+
+
+  protected function getAllPostURLs($page) {
+
+    //    $this->minkContext->printLastResponse();
+    $post_links = $page->findAll('css', 'article h2 a');
+
+    $post_urls = [];
+    foreach ($post_links as $post_link) {
+      $post_urls[] =$post_link->getAttribute('href');
+    }
+
+    return $post_urls;
+  }
+
 }
