@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-final class LCacheAddress implements \Serializable
+final class Address implements \Serializable
 {
     protected $bin;
     protected $key;
@@ -33,7 +33,7 @@ final class LCacheAddress implements \Serializable
         return is_null($this->bin);
     }
 
-    public function isMatch(LCacheAddress $address)
+    public function isMatch(Address $address)
     {
         if (!is_null($address->getBin()) && !is_null($this->bin) && $address->getBin() !== $this->bin) {
             return false;

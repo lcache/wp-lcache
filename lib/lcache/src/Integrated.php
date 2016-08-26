@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-final class LCacheIntegrated
+final class Integrated
 {
     protected $l1;
     protected $l2;
@@ -13,7 +13,7 @@ final class LCacheIntegrated
         $this->l2 = $l2;
     }
 
-    public function set(LCacheAddress $address, $value, $ttl = null, array $tags = [])
+    public function set(Address $address, $value, $ttl = null, array $tags = [])
     {
         $event_id = $this->l2->set($this->l1->getPool(), $address, $value, $ttl, $tags);
         if (!is_null($event_id)) {
@@ -22,7 +22,7 @@ final class LCacheIntegrated
         return $event_id;
     }
 
-    public function getEntry(LCacheAddress $address)
+    public function getEntry(Address $address)
     {
         $entry = $this->l1->getEntry($address);
         if (!is_null($entry)) {
@@ -36,7 +36,7 @@ final class LCacheIntegrated
         return $entry;
     }
 
-    public function get(LCacheAddress $address)
+    public function get(Address $address)
     {
         $entry = $this->getEntry($address);
         if (is_null($entry)) {
@@ -45,7 +45,7 @@ final class LCacheIntegrated
         return $entry->value;
     }
 
-    public function exists(LCacheAddress $address)
+    public function exists(Address $address)
     {
         $exists = $this->l1->exists($address);
         if ($exists) {
@@ -54,7 +54,7 @@ final class LCacheIntegrated
         return $this->l2->exists($address);
     }
 
-    public function delete(LCacheAddress $address)
+    public function delete(Address $address)
     {
         $event_id = $this->l2->delete($this->l1->getPool(), $address);
         if (!is_null($event_id)) {

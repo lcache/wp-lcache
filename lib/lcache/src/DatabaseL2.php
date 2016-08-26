@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-class LCacheDatabaseL2 extends LCacheL2
+class DatabaseL2 extends L2
 {
     protected $hits;
     protected $misses;
@@ -63,8 +63,8 @@ class LCacheDatabaseL2 extends LCacheL2
         return $this->errors;
     }
 
-    // Returns an LCacheEntry
-    public function getEntry(LCacheAddress $address)
+    // Returns an LCache\Entry
+    public function getEntry(Address $address)
     {
         try {
             $sth = $this->dbh->prepare('SELECT "event_id", "pool", "address", "value", "created", "expiration" FROM ' . $this->prefixTable('lcache_events') .' WHERE "address" = :address AND ("expiration" >= :now OR "expiration" IS NULL) ORDER BY "event_id" DESC LIMIT 1');
@@ -95,7 +95,7 @@ class LCacheDatabaseL2 extends LCacheL2
         return $last_matching_entry;
     }
 
-    public function exists(LCacheAddress $address)
+    public function exists(Address $address)
     {
         try {
             $sth = $this->dbh->prepare('SELECT "event_id", ("value" IS NOT NULL) AS value_not_null, "value" FROM ' . $this->prefixTable('lcache_events') .' WHERE "address" = :address AND ("expiration" >= :now OR "expiration" IS NULL) ORDER BY "event_id" DESC LIMIT 1');
@@ -136,7 +136,7 @@ class LCacheDatabaseL2 extends LCacheL2
         echo PHP_EOL;
     }
 
-    public function set($pool, LCacheAddress $address, $value = null, $ttl = null, array $tags = [])
+    public function set($pool, Address $address, $value = null, $ttl = null, array $tags = [])
     {
         $expiration = $ttl ? (REQUEST_TIME + $ttl) : null;
         try {
@@ -181,7 +181,7 @@ class LCacheDatabaseL2 extends LCacheL2
         return $event_id;
     }
 
-    public function delete($pool, LCacheAddress $address)
+    public function delete($pool, Address $address)
     {
         $event_id = $this->set($pool, $address);
         return $event_id;
@@ -200,14 +200,14 @@ class LCacheDatabaseL2 extends LCacheL2
         }
         $addresses = [];
         while ($tag_entry = $sth->fetchObject()) {
-            $address = new LCacheAddress();
+            $address = new Address();
             $address->unserialize($tag_entry->address);
             $addresses[] = $address;
         }
         return $addresses;
     }
 
-    public function deleteTag(LCacheL1 $l1, $tag)
+    public function deleteTag(L1 $l1, $tag)
     {
         // Find the matching keys and create tombstones for them.
         try {
@@ -221,7 +221,7 @@ class LCacheDatabaseL2 extends LCacheL2
 
         $last_applied_event_id = null;
         while ($tag_entry = $sth->fetchObject()) {
-            $address = new LCacheAddress();
+            $address = new Address();
             $address->unserialize($tag_entry->address);
             $last_applied_event_id = $this->delete($l1->getPool(), $address);
             $l1->delete($last_applied_event_id, $address);
@@ -237,7 +237,7 @@ class LCacheDatabaseL2 extends LCacheL2
         return $last_applied_event_id;
     }
 
-    public function applyEvents(LCacheL1 $l1)
+    public function applyEvents(L1 $l1)
     {
         $last_applied_event_id = $l1->getLastAppliedEventID();
 
@@ -269,13 +269,13 @@ class LCacheDatabaseL2 extends LCacheL2
 
         //while ($event = $sth->fetchObject('LCacheEntry')) {
         while ($event = $sth->fetchObject()) {
-            $address = new LCacheAddress();
+            $address = new Address();
             $address->unserialize($event->address);
             if (is_null($event->value)) {
                 $l1->delete($event->event_id, $address);
             } else {
                 $event->value = unserialize($event->value);
-                $address = new LCacheAddress();
+                $address = new Address();
                 $address->unserialize($event->address);
                 $l1->setWithExpiration($event->event_id, $address, $event->value, $event->created, $event->expiration);
             }

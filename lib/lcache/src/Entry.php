@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-final class LCacheEntry
+final class Entry
 {
     public $event_id;
     public $pool;
@@ -12,7 +12,7 @@ final class LCacheEntry
     public $expiration;
     public $tags;
 
-    public function __construct($event_id, $pool, LCacheAddress $address, $value, $created, $expiration = null, array $tags = [])
+    public function __construct($event_id, $pool, Address $address, $value, $created, $expiration = null, array $tags = [])
     {
         $this->event_id = $event_id;
         $this->pool = $pool;

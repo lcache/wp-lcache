@@ -1,14 +1,14 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-abstract class LCacheX
+abstract class LX
 {
-    abstract public function getEntry(LCacheAddress $address);
+    abstract public function getEntry(Address $address);
     abstract public function getHits();
     abstract public function getMisses();
 
-    public function get(LCacheAddress $address)
+    public function get(Address $address)
     {
         $entry = $this->getEntry($address);
         if (is_null($entry)) {
@@ -17,7 +17,7 @@ abstract class LCacheX
         return $entry->value;
     }
 
-    public function exists(LCacheAddress $address)
+    public function exists(Address $address)
     {
         $value = $this->get($address);
         return !is_null($value);
