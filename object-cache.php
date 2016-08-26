@@ -1,10 +1,10 @@
 <?php
 
-use \LCache\LCache\LCacheAddress;
-use \LCache\LCache\LCacheAPCuL1;
-use \LCache\LCache\LCacheDatabaseL2;
-use \LCache\LCache\LCacheIntegrated;
-use \LCache\LCache\LCacheNullL1;
+use \LCache\Address;
+use \LCache\APCuL1;
+use \LCache\DatabaseL2;
+use \LCache\Integrated;
+use \LCache\NullL1;
 
 // WP LCache
 // This file needs to be symlinked or copied to wp-content/object-cache.php
@@ -868,7 +868,7 @@ class WP_Object_Cache {
 			$this->lcache_calls[ $method ]++;
 			$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
 			$safe_group = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . $multisite_safe_group );
-			$address = new LCacheAddress( $safe_group, $arguments[0][0] );
+			$address = new Address( $safe_group, $arguments[0][0] );
 			// Some LCache methods don't exist directly, so we need to mock them
 			switch ( $method ) {
 				case 'incr':
@@ -962,7 +962,7 @@ class WP_Object_Cache {
 		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
 		// @codingStandardsIgnoreEnd
 			$message = 'Warning! APCu is not enabled';
-		} else if ( ! class_exists( '\LCache\LCache\LCacheNullL1' ) ) {
+		} else if ( ! class_exists( '\LCache\NullL1' ) ) {
 			$message = 'Warning! LCache library is unavailable';
 		}
 		$message .= ', which is required by WP LCache object cache.';
@@ -991,12 +991,12 @@ class WP_Object_Cache {
 
 		// apcu_sma_info() triggers a warning when APCu is disabled
 		// @codingStandardsIgnoreStart
-		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( '\LCache\LCache\LCacheNullL1' ) ) {
+		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( '\LCache\NullL1' ) ) {
 		// @codingStandardsIgnoreEnd
-			$l1 = new LCacheNullL1();
+			$l1 = new NullL1();
 			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
-				$l1 = new LCacheAPCuL1();
+				$l1 = new APCuL1();
 			}
 
 			list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
@@ -1009,8 +1009,8 @@ class WP_Object_Cache {
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-			$l2 = new LCacheDatabaseL2( $dbh );
-			$this->lcache = new LCacheIntegrated( $l1, $l2 );
+			$l2 = new DatabaseL2( $dbh );
+			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
 		}
 

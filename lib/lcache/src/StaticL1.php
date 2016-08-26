@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-class LCacheStaticL1 extends LCacheL1
+class StaticL1 extends L1
 {
     protected $hits;
     protected $misses;
@@ -21,7 +21,7 @@ class LCacheStaticL1 extends LCacheL1
         parent::__construct();
     }
 
-    public function setWithExpiration($event_id, LCacheAddress $address, $value, $created, $expiration = null)
+    public function setWithExpiration($event_id, Address $address, $value, $created, $expiration = null)
     {
         $local_key = $address->serialize();
 
@@ -29,11 +29,11 @@ class LCacheStaticL1 extends LCacheL1
         if (isset($this->storage[$local_key]) && $this->storage[$local_key]->event_id > $event_id) {
             return true;
         }
-        $this->storage[$local_key] = new LCacheEntry($event_id, $this->getPool(), $address, $value, $created, $expiration);
+        $this->storage[$local_key] = new Entry($event_id, $this->getPool(), $address, $value, $created, $expiration);
         return true;
     }
 
-    public function getEntry(LCacheAddress $address)
+    public function getEntry(Address $address)
     {
         $local_key = $address->serialize();
 
@@ -51,7 +51,7 @@ class LCacheStaticL1 extends LCacheL1
         return $entry;
     }
 
-    public function delete($event_id, LCacheAddress $address)
+    public function delete($event_id, Address $address)
     {
         $local_key = $address->serialize();
         if ($address->isEntireCache()) {

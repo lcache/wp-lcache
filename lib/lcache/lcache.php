@@ -2,13 +2,12 @@
 
 spl_autoload_register( function( $class ) {
 	$class = ltrim( $class, '\\' );
-	if ( 0 !== stripos( $class, 'LCache\LCache\\' ) ) {
+	if ( 0 !== stripos( $class, 'LCache\\' ) ) {
 		return;
 	}
 
 	$parts = explode( '\\', $class );
-	 // Don't need "LCache\LCache"
-	array_shift( $parts );
+	 // Don't need "LCache"
 	array_shift( $parts );
 	$last = array_pop( $parts ); // File should be '[...].php'
 	$last = $last . '.php';

@@ -1,10 +1,10 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-class LCacheNullL1 extends LCacheStaticL1
+class NullL1 extends StaticL1
 {
-    public function set($event_id, LCacheAddress $address, $value = null, $ttl = '')
+    public function set($event_id, Address $address, $value = null, $ttl = '')
     {
         // Store nothing; always succeed.
         return true;

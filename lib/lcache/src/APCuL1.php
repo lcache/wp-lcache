@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-class LCacheAPCuL1 extends LCacheL1
+class APCuL1 extends L1
 {
     public function __construct($pool = null)
     {
@@ -20,7 +20,7 @@ class LCacheAPCuL1 extends LCacheL1
         return 'lcache:' . $this->pool . ':' . $address->serialize();
     }
 
-    public function setWithExpiration($event_id, LCacheAddress $address, $value, $created, $expiration = null)
+    public function setWithExpiration($event_id, Address $address, $value, $created, $expiration = null)
     {
         $apcu_key = $this->getLocalKey($address);
         // Don't overwrite local entries that are even newer.
@@ -28,11 +28,11 @@ class LCacheAPCuL1 extends LCacheL1
         if ($entry !== false && $entry->event_id > $event_id) {
             return true;
         }
-        $entry = new LCacheEntry($event_id, $this->pool, $address, $value, REQUEST_TIME, $expiration);
+        $entry = new Entry($event_id, $this->pool, $address, $value, REQUEST_TIME, $expiration);
         return apcu_store($apcu_key, $entry, is_null($expiration) ? 0 : $expiration);
     }
 
-    public function getEntry(LCacheAddress $address)
+    public function getEntry(Address $address)
     {
         $apcu_key = $this->getLocalKey($address);
         $entry = apcu_fetch($apcu_key, $success);
@@ -44,7 +44,7 @@ class LCacheAPCuL1 extends LCacheL1
         return $entry;
     }
 
-    public function exists(LCacheAddress $address)
+    public function exists(Address $address)
     {
         $apcu_key = $this->getLocalKey($address);
         return apcu_exists($apcu_key);
@@ -64,7 +64,7 @@ class LCacheAPCuL1 extends LCacheL1
         // @codeCoverageIgnoreEnd
     }
 
-    public function delete($event_id, LCacheAddress $address)
+    public function delete($event_id, Address $address)
     {
         if ($address->isEntireCache()) {
             // @TODO: Consider flushing only LCache L1 storage by using an iterator.

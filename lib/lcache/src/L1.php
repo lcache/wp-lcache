@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-abstract class LCacheL1 extends LCacheX
+abstract class L1 extends LX
 {
     protected $pool;
 
@@ -26,11 +26,11 @@ abstract class LCacheL1 extends LCacheX
         return $this->pool;
     }
 
-    public function set($event_id, LCacheAddress $address, $value = null, $ttl = null)
+    public function set($event_id, Address $address, $value = null, $ttl = null)
     {
         return $this->setWithExpiration($event_id, $address, $value, REQUEST_TIME, is_null($ttl) ? null : $ttl);
     }
 
-    abstract public function setWithExpiration($event_id, LCacheAddress $address, $value, $created, $expiration = null);
-    abstract public function delete($event_id, LCacheAddress $address);
+    abstract public function setWithExpiration($event_id, Address $address, $value, $created, $expiration = null);
+    abstract public function delete($event_id, Address $address);
 }

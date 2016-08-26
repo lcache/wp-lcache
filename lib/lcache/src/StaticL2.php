@@ -1,8 +1,8 @@
 <?php
 
-namespace LCache\LCache;
+namespace LCache;
 
-class LCacheStaticL2 extends LCacheL2
+class StaticL2 extends L2
 {
     protected $events;
     protected $current_event_id;
@@ -19,8 +19,8 @@ class LCacheStaticL2 extends LCacheL2
         $this->tags = [];
     }
 
-    // Returns an LCacheEntry
-    public function getEntry(LCacheAddress $address)
+    // Returns an LCache\Entry
+    public function getEntry(Address $address)
     {
         $last_matching_entry = null;
         foreach ($this->events as $event_id => $entry) {
@@ -42,11 +42,11 @@ class LCacheStaticL2 extends LCacheL2
         return $last_matching_entry;
     }
 
-    public function set($pool, LCacheAddress $address, $value = null, $ttl = null, array $tags = [])
+    public function set($pool, Address $address, $value = null, $ttl = null, array $tags = [])
     {
         $expiration = $ttl ? (REQUEST_TIME + $ttl) : null;
         $this->current_event_id++;
-        $this->events[$this->current_event_id] = new LCacheEntry($this->current_event_id, $pool, $address, $value, REQUEST_TIME, $expiration);
+        $this->events[$this->current_event_id] = new Entry($this->current_event_id, $pool, $address, $value, REQUEST_TIME, $expiration);
 
         // Clear existing tags linked to the item. This is much more
         // efficient with database-style indexes.
@@ -72,7 +72,7 @@ class LCacheStaticL2 extends LCacheL2
         return $this->current_event_id;
     }
 
-    public function delete($pool, LCacheAddress $address)
+    public function delete($pool, Address $address)
     {
         if ($address->isEntireCache()) {
             $this->events = array();
@@ -85,7 +85,7 @@ class LCacheStaticL2 extends LCacheL2
         return isset($this->tags[$tag]) ? $this->tags[$tag] : [];
     }
 
-    public function deleteTag(LCacheL1 $l1, $tag)
+    public function deleteTag(L1 $l1, $tag)
     {
         // Materialize the tag deletion as individual key deletions.
         foreach ($this->getAddressesForTag($tag) as $address) {
@@ -96,7 +96,7 @@ class LCacheStaticL2 extends LCacheL2
         return $this->current_event_id;
     }
 
-    public function applyEvents(LCacheL1 $l1)
+    public function applyEvents(L1 $l1)
     {
         $last_applied_event_id = $l1->getLastAppliedEventID();
 
