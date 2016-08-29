@@ -1,5 +1,11 @@
 <?php
 
+use \LCache\Address;
+use \LCache\APCuL1;
+use \LCache\DatabaseL2;
+use \LCache\Integrated;
+use \LCache\NullL1;
+
 // WP LCache
 // This file needs to be symlinked or copied to wp-content/object-cache.php
 // If copied, you'll need to set the WP_LCACHE_LIB_PATH constant to the LCache directory
@@ -419,8 +425,7 @@ class WP_Object_Cache {
 			return $existing;
 		}
 
-		$id = $this->key( $key, $group );
-		$result = $this->call_lcache( 'decr', $id, $offset );
+		$result = $this->call_lcache( 'decr', array( $key, $group ), $offset );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -452,14 +457,31 @@ class WP_Object_Cache {
 		}
 
 		if ( $this->should_persist( $group ) ) {
-			$id = $this->key( $key, $group );
-			$result = $this->call_lcache( 'delete', $id );
+			$result = $this->call_lcache( 'delete', array( $key, $group ) );
 			if ( ! $result ) {
 				return false;
 			}
 		}
 
 		$this->unset_internal( $key, $group );
+		return true;
+	}
+
+	/**
+	 * Remove the contents of all cache keys in the group.
+	 *
+	 * @param string $group Where the cache contents are grouped.
+	 * @return boolean True on success, false on failure.
+	 */
+	public function delete_group( $group ) {
+
+		$multisite_safe_group = $this->multisite_safe_group( $group );
+		if ( $this->should_persist( $group ) ) {
+			$this->call_lcache( 'delete', array( null, $group ) );
+		} else if ( ! $this->should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
+			return false;
+		}
+		unset( $this->cache[ $multisite_safe_group ] );
 		return true;
 	}
 
@@ -478,7 +500,7 @@ class WP_Object_Cache {
 	public function flush( $lcache = true ) {
 		$this->cache = array();
 		if ( $lcache ) {
-			$this->call_lcache( 'delete' );
+			$this->call_lcache( 'delete', array( null, null ) );
 		}
 
 		return true;
@@ -521,8 +543,7 @@ class WP_Object_Cache {
 			return false;
 		}
 
-		$id = $this->key( $key, $group );
-		$value = $this->call_lcache( 'get', $id );
+		$value = $this->call_lcache( 'get', array( $key, $group ) );
 
 		// LCache returns `null` when the key doesn't exist
 		if ( null === $value ) {
@@ -578,8 +599,7 @@ class WP_Object_Cache {
 			return $existing;
 		}
 
-		$id = $this->key( $key, $group );
-		$result = $this->call_lcache( 'incr', $id, $offset );
+		$result = $this->call_lcache( 'incr', array( $key, $group ), $offset );
 
 		if ( is_int( $result ) ) {
 			$this->set_internal( $key, $group, $result );
@@ -658,8 +678,7 @@ class WP_Object_Cache {
 			$data = serialize( $data );
 		}
 
-		$id = $this->key( $key, $group );
-		$this->call_lcache( 'set', $id, $data, $expire );
+		$this->call_lcache( 'set', array( $key, $group ), $data, $expire );
 		return true;
 	}
 
@@ -721,8 +740,7 @@ class WP_Object_Cache {
 			return false;
 		}
 
-		$id = $this->key( $key, $group );
-		return $this->call_lcache( 'exists', $id );
+		return $this->call_lcache( 'exists', array( $key, $group ) );
 	}
 
 	/**
@@ -733,8 +751,8 @@ class WP_Object_Cache {
 	 * @return boolean
 	 */
 	protected function isset_internal( $key, $group ) {
-		$key = $this->key( $key, $group );
-		return isset( $this->cache[ $key ] );
+		$group = $this->multisite_safe_group( $group );
+		return isset( $this->cache[ $group ][ $key ] );
 	}
 
 	/**
@@ -746,9 +764,9 @@ class WP_Object_Cache {
 	 */
 	protected function get_internal( $key, $group ) {
 		$value = null;
-		$key = $this->key( $key, $group );
-		if ( isset( $this->cache[ $key ] ) ) {
-			$value = $this->cache[ $key ];
+		$group = $this->multisite_safe_group( $group );
+		if ( isset( $this->cache[ $group ][ $key ] ) ) {
+			$value = $this->cache[ $group ][ $key ];
 		}
 		if ( is_object( $value ) ) {
 			return clone $value;
@@ -768,8 +786,8 @@ class WP_Object_Cache {
 		if ( is_null( $value ) ) {
 			$value = '';
 		}
-		$key = $this->key( $key, $group );
-		$this->cache[ $key ] = $value;
+		$group = $this->multisite_safe_group( $group );
+		$this->cache[ $group ][ $key ] = $value;
 	}
 
 	/**
@@ -779,9 +797,9 @@ class WP_Object_Cache {
 	 * @param string $group
 	 */
 	protected function unset_internal( $key, $group ) {
-		$key = $this->key( $key, $group );
-		if ( isset( $this->cache[ $key ] ) ) {
-			unset( $this->cache[ $key ] );
+		$group = $this->multisite_safe_group( $group );
+		if ( isset( $this->cache[ $group ][ $key ] ) ) {
+			unset( $this->cache[ $group ][ $key ] );
 		}
 	}
 
@@ -804,6 +822,16 @@ class WP_Object_Cache {
 		}
 
 		return preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . "$prefix$group:$key" );
+	}
+
+	/**
+	 * Utility function to generate a multisite-safe group name
+	 *
+	 * @param string $group
+	 * @return string
+	 */
+	protected function multisite_safe_group( $group ) {
+		return $this->multisite && ! isset( $this->global_groups[ $group ] ) ? $this->blog_prefix . $group : $group;
 	}
 
 	/**
@@ -834,16 +862,14 @@ class WP_Object_Cache {
 				$this->lcache_calls[ $method ] = 0;
 			}
 			$this->lcache_calls[ $method ]++;
+			$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+			$safe_group = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . $multisite_safe_group );
+			$address = new Address( $safe_group, $arguments[0][0] );
 			// Some LCache methods don't exist directly, so we need to mock them
 			switch ( $method ) {
-				case 'exists':
-					$retval = call_user_func_array( array( $this->lcache, 'get' ), $arguments );
-					$retval = ! is_null( $retval );
-					break;
-
 				case 'incr':
 				case 'decr':
-					$retval = $this->lcache->get( $arguments[0] );
+					$retval = $this->lcache->get( $address );
 					if ( 'incr' === $method ) {
 						$retval += $arguments[1];
 					} else if ( 'decr' === $method ) {
@@ -852,11 +878,15 @@ class WP_Object_Cache {
 					if ( $retval < 0 ) {
 						$retval = 0;
 					}
-					$this->lcache->set( $arguments[0], $retval );
+					$this->lcache->set( $address, $retval );
 					break;
 
 				default:
-					$retval = call_user_func_array( array( $this->lcache, $method ), $arguments );
+					$passed_args = $arguments;
+					if ( isset( $passed_args[0] ) ) {
+						$passed_args[0] = $address;
+					}
+					$retval = call_user_func_array( array( $this->lcache, $method ), $passed_args );
 					break;
 			}
 			return $retval;
@@ -865,13 +895,15 @@ class WP_Object_Cache {
 		// Mock expected behavior from APCu for these methods
 		switch ( $method ) {
 			case 'incr':
-				$val = $this->cache[ $arguments[0] ] + $arguments[1];
+				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+				$val = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] + $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
 				return $val;
 			case 'decr':
-				$val = $this->cache[ $arguments[0] ] - $arguments[1];
+				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+				$val = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] - $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
@@ -926,7 +958,7 @@ class WP_Object_Cache {
 		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
 		// @codingStandardsIgnoreEnd
 			$message = 'Warning! APCu is not enabled';
-		} else if ( ! class_exists( 'LCacheNullL1' ) ) {
+		} else if ( ! class_exists( '\LCache\NullL1' ) ) {
 			$message = 'Warning! LCache library is unavailable';
 		}
 		$message .= ', which is required by WP LCache object cache.';
@@ -955,12 +987,12 @@ class WP_Object_Cache {
 
 		// apcu_sma_info() triggers a warning when APCu is disabled
 		// @codingStandardsIgnoreStart
-		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( 'LCacheNullL1' ) ) {
+		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( '\LCache\NullL1' ) ) {
 		// @codingStandardsIgnoreEnd
-			$l1 = new LCacheNullL1();
+			$l1 = new NullL1();
 			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
-				$l1 = new LCacheAPCuL1();
+				$l1 = new APCuL1();
 			}
 
 			list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
@@ -973,8 +1005,8 @@ class WP_Object_Cache {
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-			$l2 = new LCacheDatabaseL2( $dbh );
-			$this->lcache = new LCacheIntegrated( $l1, $l2 );
+			$l2 = new DatabaseL2( $dbh );
+			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
 		}
 
