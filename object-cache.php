@@ -5,7 +5,7 @@
 // If copied, you'll need to set the WP_LCACHE_AUTOLOADER constant.
 
 
-print_r("From object cache: WP_LCACHE_AUTOLOADER is "   .   WP_LCACHE_AUTOLOADER)
+print_r("From object cache: WP_LCACHE_AUTOLOADER is "   .   WP_LCACHE_AUTOLOADER);
 
 if ( ! defined( 'WP_LCACHE_AUTOLOADER' ) ) {
 	
