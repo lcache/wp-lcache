@@ -32,21 +32,21 @@ function wp_lcache_initialize_database_schema() {
 	$wpdb->query( "CREATE TABLE IF NOT EXISTS `lcache_events` (
 		`event_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		`pool` varchar(255) NOT NULL DEFAULT '' COMMENT 'PHP process pool that wrote the change.',
-		`key` varchar(255) DEFAULT '' COMMENT 'Cache key within bin.',
+		`address` varchar(255) DEFAULT NULL COMMENT 'Cache entry address (bin and key).',
 		`value` blob COMMENT 'A collection of data to cache.',
 		`expiration` int(11) DEFAULT NULL COMMENT 'A Unix timestamp indicating when the cache entry should expire, or NULL for never.',
 		`created` int(11) DEFAULT '0' COMMENT 'A Unix timestamp indicating when the cache entry was created.',
 		PRIMARY KEY (`event_id`),
 		UNIQUE KEY `event_id` (`event_id`),
 		KEY `expiration` (`expiration`),
-		KEY `lookup_miss` (`key`,`event_id`)
+		KEY `lookup_miss` (`address`,`event_id`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 
 	$wpdb->query( "CREATE TABLE IF NOT EXISTS `lcache_tags` (
 		`tag` varchar(255) NOT NULL DEFAULT '',
-		`key` varchar(255) NOT NULL DEFAULT '',
-		PRIMARY KEY (`tag`,`key`),
-		KEY `rewritten_entry` (`key`)
+		`address` varchar(255) NOT NULL DEFAULT '',
+		PRIMARY KEY (`tag`,`address`),
+		KEY `rewritten_entry` (`address`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 }
 
