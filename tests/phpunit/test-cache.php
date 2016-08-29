@@ -780,7 +780,7 @@ class CacheTest extends WP_UnitTestCase {
 		$key = 'test_cache_syncronize';
 		wp_cache_set( $key, 'foobar' );
 
-		// Mock a event that didn't make it to APCu
+		// Mock a event that didn't make it to APCu.
 		$wpdb->insert( 'lcache_events', array(
 			'pool'       => $wp_object_cache->lcache->getPool(),
 			'key'        => $key,
