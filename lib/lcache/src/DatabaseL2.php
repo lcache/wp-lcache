@@ -11,6 +11,8 @@ class DatabaseL2 extends L2
     protected $log_locally;
     protected $errors;
     protected $table_prefix;
+    protected $address_deletion_patterns;
+    protected $event_id_low_water;
 
     public function __construct($dbh, $table_prefix = '', $log_locally = false)
     {
@@ -21,11 +23,55 @@ class DatabaseL2 extends L2
         $this->log_locally = $log_locally;
         $this->errors = array();
         $this->table_prefix = $table_prefix;
+        $this->address_deletion_patterns = [];
+        $this->event_id_low_water = null;
     }
+
 
     protected function prefixTable($base_name)
     {
         return $this->table_prefix . $base_name;
+    }
+
+    protected function cleanUp()
+    {
+        // No deletions, nothing to do.
+        if (empty($this->address_deletion_patterns)) {
+            return true;
+        }
+
+        // De-dupe the deletion patterns.
+        // @TODO: Have bin deletions replace key deletions?
+        $deletions = array_values(array_unique($this->address_deletion_patterns));
+
+        $filler = implode(',', array_fill(0, count($deletions), '?'));
+        try {
+            $sth = $this->dbh->prepare('DELETE FROM ' . $this->prefixTable('lcache_events') .' WHERE "event_id" < ? AND "address" IN ('. $filler .')');
+            $sth->bindValue(1, $this->event_id_low_water, \PDO::PARAM_INT);
+            foreach ($deletions as $i => $address) {
+                $sth->bindValue($i + 2, $address, \PDO::PARAM_STR);
+            }
+            $sth->execute();
+        } catch (\PDOException $e) {
+            $this->logSchemaIssueOrRethrow('Failed to perform batch deletion', $e);
+            return false;
+        }
+
+        // Clear the queue.
+        $this->address_deletion_patterns = [];
+        return true;
+    }
+
+    public function __destruct()
+    {
+        $this->cleanUp();
+    }
+
+    protected function queueDeletion(Address $address)
+    {
+        assert(!$address->isEntireBin());
+        $pattern = $address->serialize();
+        $this->address_deletion_patterns[] = $pattern;
     }
 
     protected function logSchemaIssueOrRethrow($description, $pdo_exception)
@@ -153,16 +199,20 @@ class DatabaseL2 extends L2
         }
         $event_id = $this->dbh->lastInsertId();
 
-        // Delete obsolete events.
-        $pattern = $address->serialize();
-        // On a full or bin clear, prune old events.
+        // Handle bin and larger deletions immediately. Queue individual key
+        // deletions for shutdown.
         if ($address->isEntireBin() || $address->isEntireCache()) {
             $pattern = $address->serialize() . '%';
+            $sth = $this->dbh->prepare('DELETE FROM ' . $this->prefixTable('lcache_events') .' WHERE "event_id" < :new_event_id AND "address" LIKE :pattern');
+            $sth->bindValue('new_event_id', $event_id, \PDO::PARAM_INT);
+            $sth->bindValue('pattern', $pattern, \PDO::PARAM_STR);
+            $sth->execute();
+        } else {
+            if (is_null($this->event_id_low_water)) {
+                $this->event_id_low_water = $event_id;
+            }
+            $this->queueDeletion($address);
         }
-        $sth = $this->dbh->prepare('DELETE FROM ' . $this->prefixTable('lcache_events') . ' WHERE "address" LIKE :address AND "event_id" < :new_event_id');
-        $sth->bindValue(':address', $pattern, \PDO::PARAM_STR);
-        $sth->bindValue(':new_event_id', $event_id, \PDO::PARAM_INT);
-        $sth->execute();
 
         // Store any new cache tags.
         // @TODO: Turn into one query.
