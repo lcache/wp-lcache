@@ -6,13 +6,13 @@ use \LCache\DatabaseL2;
 use \LCache\Integrated;
 use \LCache\NullL1;
 
-// WP LCache
-// This file needs to be symlinked or copied to wp-content/object-cache.php
-// If copied, you'll need to set the WP_LCACHE_AUTOLOADER constant.
+	// WP LCache
+	// This file needs to be symlinked or copied to wp-content/object-cache.php
+	// If copied, you'll need to set the WP_LCACHE_AUTOLOADER constant.
 if ( ! defined( 'WP_LCACHE_AUTOLOADER' ) ) {
-  define( 'WP_LCACHE_AUTOLOADER', dirname( realpath(__FILE__) ) . '/vendor/autoload.php' );
+	define( 'WP_LCACHE_AUTOLOADER', dirname( realpath( __FILE__ ) ) . '/vendor/autoload.php' );
 }
-if (file_exists(WP_LCACHE_AUTOLOADER)) {
+if ( file_exists( WP_LCACHE_AUTOLOADER ) ) {
 	require_once( WP_LCACHE_AUTOLOADER );
 }
 
