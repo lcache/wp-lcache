@@ -9,8 +9,32 @@ use \LCache\NullL1;
 // WP LCache
 // This file needs to be symlinked or copied to wp-content/object-cache.php
 // If copied, you'll need to set the WP_LCACHE_AUTOLOADER constant.
+
+
+print_r("From object cache: WP_LCACHE_AUTOLOADER is "   .   WP_LCACHE_AUTOLOADER);
+
 if ( ! defined( 'WP_LCACHE_AUTOLOADER' ) ) {
-  define( 'WP_LCACHE_AUTOLOADER', dirname( __FILE__ ) . '/vendor/autoload.php' );
+	
+	
+	
+	
+	print_r("
+	
+	
+	
+	
+	Not defined
+	
+	
+	
+	
+	
+	
+	");
+	
+	
+	
+  define( 'WP_LCACHE_AUTOLOADER', dirname( realpath(__FILE__) ) . '/vendor/autoload.php' );
 }
 require_once( WP_LCACHE_AUTOLOADER );
 
