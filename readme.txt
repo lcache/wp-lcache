@@ -11,15 +11,15 @@ Supercharge your WP Object Cache with LCache, a persistent, performant, and mult
 
 == Description ==
 
-[![Travis CI](https://travis-ci.org/pantheon-systems/wp-lcache.svg?branch=master)](https://travis-ci.org/pantheon-systems/wp-lcache) [![CircleCI](https://circleci.com/gh/pantheon-systems/wp-lcache/tree/master.svg?style=svg)](https://circleci.com/gh/pantheon-systems/wp-lcache/tree/master)
+[![Travis CI](https://travis-ci.org/lcache/wp-lcache.svg?branch=master)](https://travis-ci.org/lcache/wp-lcache) [![CircleCI](https://circleci.com/gh/lcache/wp-lcache/tree/master.svg?style=svg)](https://circleci.com/gh/lcache/wp-lcache/tree/master)
 
 For sites concerned with high traffic, speed for logged-in users, or dynamic pageloads, a high-speed and persistent object cache is a must. WP LCache improves upon Memcached and Redis implementations by using APCu, PHP's in-memory cache, in a way that's compatible with multiple web nodes.
 
 Under the hood, WP LCache uses [LCache](https://github.com/lcache/lcache), a library that applies the tiered caching model of multi-core processors (with local L1 and central L2 caches) to web applications. In this configuration, APCu is the L1 cache and the database is the L2 cache.
 
-Install WP LCache from [WordPress.org](https://wordpress.org/plugins/wp-lcache/) or [Github](https://github.com/pantheon-systems/wp-lcache).
+Install WP LCache from [WordPress.org](https://wordpress.org/plugins/wp-lcache/) or [Github](https://github.com/lcache/wp-lcache).
 
-Go forth and make awesome! And, once you've built something great, [send us feature requests (or bug reports)](https://github.com/pantheon-systems/wp-lcache/issues).
+Go forth and make awesome! And, once you've built something great, [send us feature requests (or bug reports)](https://github.com/lcache/wp-lcache/issues).
 
 == Installation ==
 
@@ -35,7 +35,7 @@ That's it!
 
 The best way to contribute to the development of this plugin is by participating on the GitHub project:
 
-https://github.com/pantheon-systems/wp-lcache
+https://github.com/lcache/wp-lcache
 
 Pull requests and issues are welcome!
 
