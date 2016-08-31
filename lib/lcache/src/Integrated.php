@@ -22,7 +22,7 @@ final class Integrated
         return $event_id;
     }
 
-    public function getEntry(Address $address)
+    public function getEntry(Address $address, $return_tombstone = false)
     {
         $entry = $this->l1->getEntry($address);
         if (!is_null($entry)) {
@@ -30,9 +30,14 @@ final class Integrated
         }
         $entry = $this->l2->getEntry($address);
         if (is_null($entry)) {
-            return null;
+            // On an L2 miss, construct a negative cache entry that will be
+            // overwritten on any update.
+            $entry = new Entry(0, $this->l1->getPool(), $address, null, REQUEST_TIME, null);
         }
         $this->l1->setWithExpiration($entry->event_id, $address, $entry->value, $entry->created, $entry->expiration);
+        if (is_null($entry->value) && !$return_tombstone) {
+            return null;
+        }
         return $entry;
     }
 
