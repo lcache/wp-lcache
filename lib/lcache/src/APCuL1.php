@@ -44,12 +44,6 @@ class APCuL1 extends L1
         return $entry;
     }
 
-    public function exists(Address $address)
-    {
-        $apcu_key = $this->getLocalKey($address);
-        return apcu_exists($apcu_key);
-    }
-
     // @TODO: Remove APCIterator support once we only support PHP 7+
     protected function getIterator($prefix)
     {
