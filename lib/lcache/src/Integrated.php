@@ -22,7 +22,7 @@ final class Integrated
         return $event_id;
     }
 
-    public function getEntry(Address $address, $return_tombstone = false)
+    protected function getEntryOrTombstone(Address $address)
     {
         $entry = $this->l1->getEntry($address);
         if (!is_null($entry)) {
@@ -35,10 +35,17 @@ final class Integrated
             $entry = new Entry(0, $this->l1->getPool(), $address, null, REQUEST_TIME, null);
         }
         $this->l1->setWithExpiration($entry->event_id, $address, $entry->value, $entry->created, $entry->expiration);
-        if (is_null($entry->value) && !$return_tombstone) {
-            return null;
-        }
         return $entry;
+    }
+
+
+    public function getEntry(Address $address, $return_tombstone = false)
+    {
+        $entry = $this->getEntryOrTombstone($address);
+        if (!is_null($entry) && (!is_null($entry->value) || $return_tombstone)) {
+            return $entry;
+        }
+        return null;
     }
 
     public function get(Address $address)
