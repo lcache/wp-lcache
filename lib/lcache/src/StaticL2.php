@@ -13,7 +13,7 @@ class StaticL2 extends L2
     public function __construct()
     {
         $this->events = array();
-        $this->current_event_id = 1;
+        $this->current_event_id = 0;
         $this->hits = 0;
         $this->misses = 0;
         $this->tags = [];
@@ -38,14 +38,23 @@ class StaticL2 extends L2
         if (is_null($last_matching_entry) || is_null($last_matching_entry->value)) {
             return null;
         }
+
+        $last_matching_entry->value = unserialize($last_matching_entry->value);
+
         $this->hits++;
         return $last_matching_entry;
     }
 
-    public function set($pool, Address $address, $value = null, $ttl = null, array $tags = [])
+    public function set($pool, Address $address, $value = null, $ttl = null, array $tags = [], $value_is_serialized = false)
     {
         $expiration = $ttl ? (REQUEST_TIME + $ttl) : null;
         $this->current_event_id++;
+
+        // Serialize the value if it isn't already. We serialize the values
+        // in static storage to make it more similar to other persistent stores.
+        if (!$value_is_serialized) {
+            $value = serialize($value);
+        }
         $this->events[$this->current_event_id] = new Entry($this->current_event_id, $pool, $address, $value, REQUEST_TIME, $expiration);
 
         // Clear existing tags linked to the item. This is much more
@@ -77,7 +86,7 @@ class StaticL2 extends L2
         if ($address->isEntireCache()) {
             $this->events = array();
         }
-        return $this->set($pool, $address);
+        return $this->set($pool, $address, null, null, [], true);
     }
 
     public function getAddressesForTag($tag)
@@ -114,7 +123,13 @@ class StaticL2 extends L2
                 if (is_null($event->value)) {
                     $l1->delete($event->event_id, $event->getAddress());
                 } else {
-                    $l1->setWithExpiration($event->event_id, $event->getAddress(), $event->value, $event->created, $event->expiration);
+                    $unserialized_value = @unserialize($event->value);
+                    if ($unserialized_value === false && $event->value !== serialize(false)) {
+                        // Delete the L1 entry, if any, when we fail to unserialize.
+                        $l1->delete($event->event_id, $event->getAddress());
+                    } else {
+                        $l1->setWithExpiration($event->event_id, $event->getAddress(), $unserialized_value, $event->created, $event->expiration);
+                    }
                 }
                 $applied++;
             }
