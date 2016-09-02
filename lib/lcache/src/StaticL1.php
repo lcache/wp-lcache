@@ -47,6 +47,7 @@ class StaticL1 extends L1
             $this->misses++;
             return null;
         }
+
         $this->hits++;
         return $entry;
     }

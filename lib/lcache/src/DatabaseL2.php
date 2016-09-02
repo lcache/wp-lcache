@@ -182,14 +182,20 @@ class DatabaseL2 extends L2
         echo PHP_EOL;
     }
 
-    public function set($pool, Address $address, $value = null, $ttl = null, array $tags = [])
+    public function set($pool, Address $address, $value = null, $ttl = null, array $tags = [], $value_is_serialized = false)
     {
         $expiration = $ttl ? (REQUEST_TIME + $ttl) : null;
+
+        // Support pre-serialized values for testing purposes.
+        if (!$value_is_serialized) {
+            $value = is_null($value) ? null : serialize($value);
+        }
+
         try {
             $sth = $this->dbh->prepare('INSERT INTO ' . $this->prefixTable('lcache_events') . ' ("pool", "address", "value", "created", "expiration") VALUES (:pool, :address, :value, :now, :expiration)');
             $sth->bindValue(':pool', $pool, \PDO::PARAM_STR);
             $sth->bindValue(':address', $address->serialize(), \PDO::PARAM_STR);
-            $sth->bindValue(':value', is_null($value) ? null : serialize($value), \PDO::PARAM_LOB);
+            $sth->bindValue(':value', $value, \PDO::PARAM_LOB);
             $sth->bindValue(':expiration', $expiration, \PDO::PARAM_INT);
             $sth->bindValue(':now', REQUEST_TIME, \PDO::PARAM_INT);
             $sth->execute();
@@ -302,7 +308,11 @@ class DatabaseL2 extends L2
                 return null;
             }
             $last_event = $sth->fetchObject();
-            $l1->setLastAppliedEventID($last_event->event_id);
+            if ($last_event === false) {
+                $l1->setLastAppliedEventID(0);
+            } else {
+                $l1->setLastAppliedEventID($last_event->event_id);
+            }
             return null;
         }
 
@@ -324,10 +334,16 @@ class DatabaseL2 extends L2
             if (is_null($event->value)) {
                 $l1->delete($event->event_id, $address);
             } else {
-                $event->value = unserialize($event->value);
-                $address = new Address();
-                $address->unserialize($event->address);
-                $l1->setWithExpiration($event->event_id, $address, $event->value, $event->created, $event->expiration);
+                $unserialized_value = @unserialize($event->value);
+                if ($unserialized_value === false && $event->value !== serialize(false)) {
+                    // Delete the L1 entry, if any, when we fail to unserialize.
+                    $l1->delete($event->event_id, $address);
+                } else {
+                    $event->value = $unserialized_value;
+                    $address = new Address();
+                    $address->unserialize($event->address);
+                    $l1->setWithExpiration($event->event_id, $address, $event->value, $event->created, $event->expiration);
+                }
             }
             $last_applied_event_id = $event->event_id;
             $applied++;
