@@ -26,6 +26,13 @@ copy( dirname( dirname( dirname( __FILE__ ) ) ) . '/object-cache.php', $_core_di
 
 require $_tests_dir . '/includes/bootstrap.php';
 
+// If PHP_APCU is enabled but LCache isn't available, something broke
+if ( 'enabled' === getenv( 'PHP_APCU' ) && ! $GLOBALS['wp_object_cache']->is_lcache_available() ) {
+	error_log( PHP_EOL );
+	error_log( "LCache isn't available when it should be." );
+	exit( 1 );
+}
+
 error_log( PHP_EOL );
 $lcache_state = $GLOBALS['wp_object_cache']->is_lcache_available() ? 'enabled' : 'disabled';
 error_log( 'LCache: ' . $lcache_state . PHP_EOL );
