@@ -36,18 +36,15 @@ class APCuL1 extends L1
     {
         $apcu_key = $this->getLocalKey($address);
         $entry = apcu_fetch($apcu_key, $success);
+
+        // Handle failed reads.
         if (!$success) {
             $this->recordMiss();
             return null;
         }
+
         $this->recordHit();
         return $entry;
-    }
-
-    public function exists(Address $address)
-    {
-        $apcu_key = $this->getLocalKey($address);
-        return apcu_exists($apcu_key);
     }
 
     // @TODO: Remove APCIterator support once we only support PHP 7+
@@ -137,7 +134,7 @@ class APCuL1 extends L1
     {
         $value = apcu_fetch('lcache_status:' . $this->pool . ':last_applied_event_id');
         if ($value === false) {
-            $value = 0;
+            $value = null;
         }
         return $value;
     }
