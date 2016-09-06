@@ -33,7 +33,7 @@ class DatabaseL2 extends L2
         return $this->table_prefix . $base_name;
     }
 
-    protected function cleanUp()
+    protected function pruneReplacedEvents()
     {
         // No deletions, nothing to do.
         if (empty($this->address_deletion_patterns)) {
@@ -64,7 +64,47 @@ class DatabaseL2 extends L2
 
     public function __destruct()
     {
-        $this->cleanUp();
+        $this->pruneReplacedEvents();
+    }
+
+    public function countGarbage()
+    {
+        try {
+            $sth = $this->dbh->prepare('SELECT COUNT(*) garbage FROM ' . $this->prefixTable('lcache_events') . ' WHERE "expiration" < :now');
+            $sth->bindValue(':now', REQUEST_TIME, \PDO::PARAM_INT);
+            $sth->execute();
+        } catch (\PDOException $e) {
+            $this->logSchemaIssueOrRethrow('Failed to count garbage', $e);
+            return null;
+        }
+
+        $count = $sth->fetchObject();
+        return intval($count->garbage);
+    }
+
+    public function collectGarbage($item_limit = null)
+    {
+        $sql = 'DELETE FROM ' . $this->prefixTable('lcache_events') . ' WHERE "expiration" < :now';
+        // This is not supported by standard SQLite.
+        // @codeCoverageIgnoreStart
+        if (!is_null($item_limit)) {
+            $sql .= ' ORDER BY "event_id" LIMIT :item_limit';
+        }
+        // @codeCoverageIgnoreEnd
+        try {
+            $sth = $this->dbh->prepare($sql);
+            $sth->bindValue(':now', REQUEST_TIME, \PDO::PARAM_INT);
+            // This is not supported by standard SQLite.
+            // @codeCoverageIgnoreStart
+            if (!is_null($item_limit)) {
+                $sth->bindValue(':item_limit', $item_limit, \PDO::PARAM_INT);
+            }
+            // @codeCoverageIgnoreEnd
+            $sth->execute();
+        } catch (\PDOException $e) {
+            $this->logSchemaIssueOrRethrow('Failed to collect garbage', $e);
+            return false;
+        }
     }
 
     protected function queueDeletion(Address $address)
