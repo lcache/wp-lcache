@@ -37,7 +37,7 @@ git clone -b $TERMINUS_ENV $PANTHEON_GIT_URL $PREPARE_DIR
 rm -rf $PREPARE_DIR/wp-content/plugins/wp-lcache
 rm -rf $PREPARE_DIR/wp-content/object-cache.php
 cd $BASH_DIR/..
-rsync -av --exclude='vendor/' --exclude='node_modules/' --exclude='tests/' ./* $PREPARE_DIR/wp-content/plugins/wp-lcache
+rsync -av --exclude='node_modules/' --exclude='tests/' ./* $PREPARE_DIR/wp-content/plugins/wp-lcache
 rm -rf $PREPARE_DIR/wp-content/plugins/wp-lcache/.git
 cd $PREPARE_DIR/wp-content
 ln -s plugins/wp-lcache/object-cache.php object-cache.php
