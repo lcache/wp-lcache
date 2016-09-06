@@ -19,6 +19,31 @@ class StaticL2 extends L2
         $this->tags = [];
     }
 
+    public function countGarbage()
+    {
+        $garbage = 0;
+        foreach ($this->events as $event_id => $entry) {
+            if ($entry->expiration < REQUEST_TIME) {
+                $garbage++;
+            }
+        }
+        return $garbage;
+    }
+
+    public function collectGarbage($item_limit = null)
+    {
+        $deleted = 0;
+        foreach ($this->events as $event_id => $entry) {
+            if ($entry->expiration < REQUEST_TIME) {
+                unset($this->events[$event_id]);
+                $deleted++;
+            }
+            if ($deleted === $item_limit) {
+                break;
+            }
+        }
+    }
+
     // Returns an LCache\Entry
     public function getEntry(Address $address)
     {
