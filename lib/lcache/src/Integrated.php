@@ -110,4 +110,9 @@ final class Integrated
     {
         return $this->l1->getPool();
     }
+
+    public function collectGarbage($item_limit = null)
+    {
+        return $this->l2->collectGarbage($item_limit);
+    }
 }

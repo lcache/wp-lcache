@@ -9,4 +9,6 @@ abstract class L2 extends LX
     abstract public function delete($pool, Address $address);
     abstract public function deleteTag(L1 $l1, $tag);
     abstract public function getAddressesForTag($tag);
+    abstract public function collectGarbage($item_limit = null);
+    abstract public function countGarbage();
 }
