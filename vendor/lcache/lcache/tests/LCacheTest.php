@@ -148,7 +148,7 @@ class LCacheTest extends \PHPUnit_Extensions_Database_TestCase
         $applied = $pool1->synchronize();
         $this->assertEquals(null, $applied);
         $current_event_id = $pool1->getLastAppliedEventID();
-        $this->assertEquals(1, $current_event_id);
+        $this->assertEquals(0, $current_event_id);
 
         // Add a new entry to Pool 1. The last applied event should be our
         // change. However, because the event is from the same pool, applied
@@ -188,7 +188,9 @@ class LCacheTest extends \PHPUnit_Extensions_Database_TestCase
         $this->assertEquals(0, $pool2->getMisses());
 
         // Initialize Pool 2 synchronization.
-        $pool2->synchronize();
+        $changes = $pool2->synchronize();
+        $this->assertNull($changes);
+        $this->assertEquals(1, $second_l1->getLastAppliedEventID());
 
         // Alter the item in Pool 1. Pool 2 should hit its L1 again
         // with the out-of-date item. Synchronizing should fix it.
@@ -229,6 +231,22 @@ class LCacheTest extends \PHPUnit_Extensions_Database_TestCase
         $pool2->synchronize();
         $this->assertNull($pool2->get($mybin1_mykey));
         $this->assertEquals('myvalue2', $pool2->get($mybin2_mykey));
+
+        // An L2 miss should place a tombstone into L1.
+        $dne = new Address('mypool', 'mykey-dne');
+        $this->assertNull($pool1->get($mybin1_mykey));
+        $tombstone = $pool1->getEntry($mybin1_mykey, true);
+        $this->assertNotNull($tombstone);
+        $this->assertNull($tombstone->value);
+
+        // The L1 should return the tombstone entry so the integrated cache
+        // can avoid rewriting it.
+        $tombstone = $first_l1->getEntry($mybin1_mykey);
+        $this->assertNotNull($tombstone);
+        $this->assertNull($tombstone->value);
+
+        // The tombstone should also count as non-existence.
+        $this->assertFalse($pool1->exists($mybin1_mykey));
     }
 
     protected function performClearSynchronizationTest($central, $first_l1, $second_l1)
@@ -322,7 +340,6 @@ class LCacheTest extends \PHPUnit_Extensions_Database_TestCase
         $this->assertTrue($found);
     }
 
-
     public function testSynchronizationStatic()
     {
         $central = new StaticL2();
@@ -407,6 +424,20 @@ class LCacheTest extends \PHPUnit_Extensions_Database_TestCase
 
         // Try applying events to an uninitialized L1.
         $this->assertNull($l2->applyEvents(new StaticL1()));
+
+        // Try garbage collection routines.
+        $pool->collectGarbage();
+        $count = $l2->countGarbage();
+        $this->assertNull($count);
+    }
+
+    public function testDatabaseL2SyncWithNoWrites()
+    {
+        $this->createSchema();
+        $l2 = new DatabaseL2($this->dbh, '', true);
+        $l1 = new StaticL1('first');
+        $pool = new Integrated($l1, $l2);
+        $pool->synchronize();
     }
 
     public function testExistsDatabaseL2()
@@ -586,6 +617,80 @@ class LCacheTest extends \PHPUnit_Extensions_Database_TestCase
         $this->assertEquals(strpos($entire_mybin->serialize(), $mybin_mykey->serialize()), 0);
     }
 
+    public function performFailedUnserializationOnSyncTest($l2)
+    {
+        $l1 = new StaticL1();
+        $pool = new Integrated($l1, $l2);
+        $myaddr = new Address('mybin', 'mykey');
+
+        $invalid_object = 'O:10:"HelloWorl":0:{}';
+
+        // Set the L1's high water mark.
+        $pool->set($myaddr, 'valid');
+        $changes = $pool->synchronize();
+        $this->assertNull($changes);  // Just initialized event high water mark.
+        $this->assertEquals(1, $l1->getLastAppliedEventID());
+
+        // Put an invalid object into the L2 and synchronize again.
+        $l2->set('anotherpool', $myaddr, $invalid_object, null, [], true);
+        $changes = $pool->synchronize();
+        $this->assertEquals(1, $changes);
+        $this->assertEquals(2, $l1->getLastAppliedEventID());
+
+        // The sync should delete the item from the L1, causing it to miss.
+        $this->assertNull($l1->get($myaddr));
+        $this->assertEquals(0, $l1->getHits());
+        $this->assertEquals(1, $l1->getMisses());
+    }
+
+    public function testDatabaseL2FailedUnserializationOnSync()
+    {
+        $this->createSchema();
+        $l2 = new DatabaseL2($this->dbh);
+        $this->performFailedUnserializationOnSyncTest($l2);
+    }
+
+    public function testStaticL2FailedUnserializationOnSync()
+    {
+        $l2 = new StaticL2();
+        $this->performFailedUnserializationOnSyncTest($l2);
+    }
+
+    public function performGarbageCollectionTest($l2)
+    {
+        $pool = new Integrated(new StaticL1(), $l2);
+        $myaddr = new Address('mybin', 'mykey');
+        $this->assertEquals(0, $l2->countGarbage());
+        $pool->set($myaddr, 'myvalue', -1);
+        $this->assertEquals(1, $l2->countGarbage());
+        $pool->collectGarbage();
+        $this->assertEquals(0, $l2->countGarbage());
+    }
+
+    public function testDatabaseL2GarbageCollection()
+    {
+        $this->createSchema();
+        $l2 = new DatabaseL2($this->dbh);
+        $this->performGarbageCollectionTest($l2);
+    }
+
+    public function testStaticL2GarbageCollection()
+    {
+        $l2 = new StaticL2();
+        $this->performGarbageCollectionTest($l2);
+
+        // Test item limits.
+        $pool = new Integrated(new StaticL1(), $l2);
+        $myaddr2 = new Address('mybin', 'mykey2');
+        $myaddr3 = new Address('mybin', 'mykey3');
+        $pool->collectGarbage();
+        $pool->set($myaddr2, 'myvalue', -1);
+        $pool->set($myaddr3, 'myvalue', -1);
+        $this->assertEquals(2, $l2->countGarbage());
+        $pool->collectGarbage(1);
+        $this->assertEquals(1, $l2->countGarbage());
+    }
+
     /**
     * @return PHPUnit_Extensions_Database_DataSet_IDataSet
     */
@@ -594,3 +699,4 @@ class LCacheTest extends \PHPUnit_Extensions_Database_TestCase
         return new \PHPUnit_Extensions_Database_DataSet_DefaultDataSet();
     }
 }
+

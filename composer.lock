@@ -4,25 +4,25 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "26cb52555141a425cc5652dd3d36c2d5",
-    "content-hash": "d25532da2daa9b97e2d51661994d23ae",
+    "hash": "8cd790ce11d96e7adae672eaf98ae3e3",
+    "content-hash": "2b2f60c197f8261b511e40c53f8255fa",
     "packages": [
         {
             "name": "lcache/lcache",
-            "version": "v0.1.2",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lcache/lcache.git",
-                "reference": "731172593122d0cb8d27964b371055f0f1551931"
+                "reference": "ba0348e50269e0a7db9742c2d5709d7803628e18"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lcache/lcache/zipball/731172593122d0cb8d27964b371055f0f1551931",
-                "reference": "731172593122d0cb8d27964b371055f0f1551931",
+                "url": "https://api.github.com/repos/lcache/lcache/zipball/ba0348e50269e0a7db9742c2d5709d7803628e18",
+                "reference": "ba0348e50269e0a7db9742c2d5709d7803628e18",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.5.0"
+                "php": ">=5.6.0"
             },
             "require-dev": {
                 "phpunit/dbunit": "*",
@@ -52,7 +52,7 @@
                 }
             ],
             "description": "LCache library.",
-            "time": "2016-08-30 01:05:43"
+            "time": "2016-09-03 00:37:50"
         }
     ],
     "packages-dev": [
@@ -2808,6 +2808,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "lcache/lcache": 20,
         "pantheon-systems/pantheon-wordpress-upstream-tests": 20
     },
     "prefer-stable": false,
