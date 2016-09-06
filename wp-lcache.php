@@ -30,6 +30,7 @@ function wp_lcache_initialize_database_schema() {
 	global $wpdb;
 
 	$events_table = $GLOBALS['table_prefix'] . 'lcache_events';
+	// @codingStandardsIgnoreStart
 	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$events_table}` (
 		`event_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		`pool` varchar(255) NOT NULL DEFAULT '' COMMENT 'PHP process pool that wrote the change.',
@@ -50,6 +51,7 @@ function wp_lcache_initialize_database_schema() {
 		PRIMARY KEY (`tag`,`address`),
 		KEY `rewritten_entry` (`address`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
+	// @codingStandardsIgnoreEnd
 }
 
 if ( function_exists( 'register_activation_hook' ) ) {
