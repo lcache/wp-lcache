@@ -275,71 +275,74 @@ class WP_Object_Cache {
 	/**
 	 * Holds the cached objects
 	 *
+	 * @access protected
 	 * @var array
-	 * @access private
 	 */
-	var $cache = array();
+	public $cache = array();
 
 	/**
 	 * The amount of times the cache data was already stored in the cache.
 	 *
-	 * @access private
+	 * @access public
 	 * @var int
 	 */
-	var $cache_hits = 0;
+	public $cache_hits = 0;
 
 	/**
 	 * Amount of times the cache did not have the request in cache
 	 *
-	 * @var int
 	 * @access public
+	 * @var int
 	 */
-	var $cache_misses = 0;
+	public $cache_misses = 0;
 
 	/**
 	 * A count of calls made to LCache
 	 *
-	 * @access private
+	 * @access public
 	 * @var int
 	 */
-	var $lcache_calls = array();
+	public $lcache_calls = array();
 
 	/**
 	 * List of global groups
 	 *
-	 * @var array
 	 * @access protected
+	 * @var array
 	 */
-	var $global_groups = array();
+	public $global_groups = array();
 
 	/**
 	 * List of non-persistent groups
 	 *
-	 * @var array
 	 * @access protected
+	 * @var array
 	 */
-	var $non_persistent_groups = array();
+	public $non_persistent_groups = array();
 
 	/**
 	 * The blog prefix to prepend to keys in non-global groups.
 	 *
+	 * @access protected
 	 * @var int
-	 * @access private
 	 */
-	var $blog_prefix;
+	public $blog_prefix;
 
 	/**
 	 * LCache instance to interact with
 	 *
+	 * @access public
 	 * @var bool
-	 * @access private
 	 */
-	var $lcache = null;
+	public $lcache = null;
 
 	/**
 	 * The last triggered error
+	 *
+	 * @access protected
+	 * @var string
 	 */
-	var $last_triggered_error = '';
+	public $last_triggered_error = '';
 
 	/**
 	 * Adds data to the cache if it doesn't already exist.
