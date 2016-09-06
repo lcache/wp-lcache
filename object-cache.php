@@ -1009,7 +1009,7 @@ class WP_Object_Cache {
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-			$l2 = new DatabaseL2( $dbh );
+			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'] );
 			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
 		}

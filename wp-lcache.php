@@ -29,7 +29,8 @@
 function wp_lcache_initialize_database_schema() {
 	global $wpdb;
 
-	$wpdb->query( "CREATE TABLE IF NOT EXISTS `lcache_events` (
+	$events_table = $GLOBALS['table_prefix'] . 'lcache_events';
+	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$events_table}` (
 		`event_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		`pool` varchar(255) NOT NULL DEFAULT '' COMMENT 'PHP process pool that wrote the change.',
 		`address` varchar(255) DEFAULT NULL COMMENT 'Cache entry address (bin and key).',
@@ -42,7 +43,8 @@ function wp_lcache_initialize_database_schema() {
 		KEY `lookup_miss` (`address`,`event_id`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 
-	$wpdb->query( "CREATE TABLE IF NOT EXISTS `lcache_tags` (
+	$tags_table = $GLOBALS['table_prefix'] . 'lcache_tags';
+	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$tags_table}` (
 		`tag` varchar(255) NOT NULL DEFAULT '',
 		`address` varchar(255) NOT NULL DEFAULT '',
 		PRIMARY KEY (`tag`,`address`),
