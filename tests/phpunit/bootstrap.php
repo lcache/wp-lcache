@@ -16,6 +16,8 @@ if ( getenv( 'WP_CORE_DIR' ) ) {
 }
 
 define( 'WP_LCACHE_RUNNING_TESTS', true );
+$_SERVER['SERVER_ADDR'] = 'example.org';
+$_SERVER['SERVER_PORT'] = 80;
 require dirname( dirname( dirname( __FILE__ ) ) ) . '/wp-lcache.php';
 
 // Easiest way to get this to where WordPress will load it
