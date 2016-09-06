@@ -21,5 +21,8 @@
       "type": "vcs",
       "url": "git@github.com:pantheon-systems/pantheon-wordpress-upstream-tests.git"
     }
+  },
+  "require": {
+    "lcache/lcache": "^0.2.2"
   }
 }

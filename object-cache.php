@@ -8,12 +8,12 @@ use \LCache\NullL1;
 
 // WP LCache
 // This file needs to be symlinked or copied to wp-content/object-cache.php
-// If copied, you'll need to set the WP_LCACHE_LIB_PATH constant to the LCache directory
-
-if ( defined( 'WP_LCACHE_LIB_PATH' ) ) {
-	require_once WP_LCACHE_LIB_PATH;
-} else if ( file_exists( dirname( __FILE__ ) . '/lib/lcache/lcache.php' ) ) {
-	require_once dirname( __FILE__ ) . '/lib/lcache/lcache.php';
+/// If copied, you'll need to set the WP_LCACHE_AUTOLOADER constant.
+if ( ! defined( 'WP_LCACHE_AUTOLOADER' ) ) {
+	define( 'WP_LCACHE_AUTOLOADER', dirname( realpath( __FILE__ ) ) . '/vendor/autoload.php' );
+}
+if ( file_exists( WP_LCACHE_AUTOLOADER ) ) {
+	require_once( WP_LCACHE_AUTOLOADER );
 }
 
 # Users with setups where multiple installs share a common wp-config.php or $table_prefix

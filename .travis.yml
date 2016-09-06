@@ -37,10 +37,10 @@ before_script:
           echo "apc.enable_cli='on'" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
         fi
       fi
+    - composer install
     - |
       if [[ "$WP_TRAVISCI" == "phpcs" ]] ; then
         npm install
-        composer install
       fi
 
 script:
