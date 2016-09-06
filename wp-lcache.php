@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP LCache
  * Plugin URI: http://github.com/pantheon-systems/wp-lcache/
- * Description: WordPress Object Cache using APCu. Requires APCu installed.
+ * Description: Supercharge your WP Object Cache with LCache, a persistent, performant, and multi-layer cache library.
  * Version: 0.1.0-alpha
  * Author: Pantheon, Daniel Bachhuber
  * Author URI: https://pantheon.io/
