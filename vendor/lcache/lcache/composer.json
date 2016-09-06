@@ -1,0 +1,38 @@
+{
+    "name": "lcache/lcache",
+    "description": "LCache library.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "David Strauss",
+            "email": "david@davidstrauss.net"
+        }
+    ],
+    "autoload":{
+        "psr-4":{
+            "LCache\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LCache\\TestUtils\\": "tests/src"
+        }
+    },
+    "require": {
+        "php": ">=5.5.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "4.*",
+        "phpunit/dbunit": "*",
+        "satooshi/php-coveralls": "^1.0",
+        "squizlabs/php_codesniffer": "2.*"
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        }
+    }
+}
