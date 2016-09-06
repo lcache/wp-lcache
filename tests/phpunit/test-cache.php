@@ -774,6 +774,42 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( $wp_object_cache->cache, $new_blank_cache_object->cache );
 	}
 
+	public function test_cache_syncronize() {
+		global $wpdb, $wp_object_cache, $table_prefix;
+
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
+		}
+
+		// Set the initial cache
+		$key = 'test_cache_syncronize';
+		$group = 'testgroup';
+		wp_cache_set( $key, 'first_val', $group );
+
+		$address = new \LCache\Address( $group, $key );
+		$apcu_key = 'lcache:' . $wp_object_cache->lcache->getPool() . ':' . $address->serialize();
+		$this->assertEquals( 'first_val', unserialize( apcu_fetch( $apcu_key )->value ) );
+
+		// L2 isn't available as a public resource, so we need to recreate
+		list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
+		$dsn = 'mysql:host='. DB_HOST. ';port='. $port .';dbname='. DB_NAME;
+		$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
+		$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
+		$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+		$l2 = new \LCache\DatabaseL2( $dbh );
+
+		// Mock a event that didn't make it to APCu
+		$address = new \LCache\Address( $group, $key );
+		$event_id = $l2->set( $wp_object_cache->lcache->getPool(), $address, serialize( 'second_val' ) );
+
+		// Reloading the object cache will syncronize the event.
+		$this->assertEquals( 'first_val', wp_cache_get( $key, $group ) );
+		$this->assertEquals( 'first_val', unserialize( apcu_fetch( $apcu_key )->value ) );
+		wp_cache_init();
+		$this->assertEquals( 'second_val', wp_cache_get( $key, $group ) );
+		$this->assertEquals( 'second_val', unserialize( apcu_fetch( $apcu_key )->value ) );
+	}
+
 	public function test_wp_cache_replace() {
 		$key  = 'my-key';
 		$val1 = 'first-val';
@@ -808,5 +844,31 @@ class CacheTest extends WP_UnitTestCase {
 		// @codingStandardsIgnoreStart
 		unlink( ABSPATH . 'wp-content/object-cache.php' );
 		// @codingStandardsIgnoreEnd
+	}
+
+	/**
+	 * Get the port or the socket from the host.
+	 *
+	 * @param string $host
+	 * @return array
+	 */
+	private static function get_port_socket_from_host( $host ) {
+		$port = null;
+		$socket = null;
+		$port_or_socket = strstr( $host, ':' );
+		if ( ! empty( $port_or_socket ) ) {
+			$host = substr( $host, 0, strpos( $host, ':' ) );
+			$port_or_socket = substr( $port_or_socket, 1 );
+			if ( 0 !== strpos( $port_or_socket, '/' ) ) {
+				$port = intval( $port_or_socket );
+				$maybe_socket = strstr( $port_or_socket, ':' );
+				if ( ! empty( $maybe_socket ) ) {
+					$socket = substr( $maybe_socket, 1 );
+				}
+			} else {
+				$socket = $port_or_socket;
+			}
+		}
+		return array( $port, $socket );
 	}
 }
