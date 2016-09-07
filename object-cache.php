@@ -951,6 +951,23 @@ class WP_Object_Cache {
 	}
 
 	/**
+	 * Register a cron job to purge expired items from L2 cache
+	 */
+	public function wp_action_init_register_cron() {
+		if ( wp_next_scheduled( 'wp_lcache_collect_garbage' ) ) {
+			return;
+		}
+		wp_schedule_event( time(), 'daily', 'wp_lcache_collect_garbage' );
+	}
+
+	/**
+	 * Cron callback to purge items frm the L2 cache
+	 */
+	public function wp_action_wp_lcache_collect_garbage() {
+		$this->lcache->collectGarbage();
+	}
+
+	/**
 	 * Admin UI to let the end user know that LCache isn't available
 	 */
 	public function wp_action_admin_notices_warn_missing_lcache() {
@@ -1028,6 +1045,11 @@ class WP_Object_Cache {
 			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'] );
 			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
+
+			if ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
+				add_action( 'init', array( $this, 'wp_action_init_register_cron' ) );
+				add_action( 'wp_lcache_collect_garbage', array( $this, 'wp_action_wp_lcache_collect_garbage' ) );
+			}
 		}
 
 		if ( ! empty( $missing_requirements ) && function_exists( 'add_action' ) ) {
