@@ -954,18 +954,8 @@ class WP_Object_Cache {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		// Default generic message
-		$message = 'Warning! LCache library or APCu is unavailable';
-		if ( ! function_exists( 'apcu_sma_info' ) ) {
-			$message = 'Warning! APCu is unavailable';
-		// @codingStandardsIgnoreStart
-		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
-		// @codingStandardsIgnoreEnd
-			$message = 'Warning! APCu is not enabled';
-		} else if ( ! class_exists( '\LCache\NullL1' ) ) {
-			$message = 'Warning! LCache library is unavailable';
-		}
-		$message .= ', which is required by WP LCache object cache.';
+		$missing_requirements = self::check_missing_lcache_requirements();
+		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache.', $missing_requirements, count( $missing_requirements ) > 1 ? 'are' : 'is' );
 		echo '<div class="message error"><p>' . esc_html( $message ) . '</p></div>';
 	}
 
@@ -979,6 +969,31 @@ class WP_Object_Cache {
 	}
 
 	/**
+	 * Check whether LCache requirements are fulfilled
+	 *
+	 * @return array
+	 */
+	protected static function check_missing_lcache_requirements() {
+		$missing = array();
+		if ( ! class_exists( '\LCache\NullL1' ) ) {
+			$missing['lcache'] = 'LCache library';
+		}
+		// apcu_sma_info() triggers a warning when APCu is disabled
+		// @codingStandardsIgnoreStart
+		if ( ! function_exists( 'apcu_sma_info' ) ) {
+			$missing['apcu-installed'] = 'APCu extension installed';
+		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+			$missing['apcu-enabled'] = 'APCu extension enabled';
+		}
+		// @codingStandardsIgnoreEnd
+		if ( -1 === version_compare( PHP_VERSION, '5.6' ) ) {
+			$missing['php'] = 'PHP 5.6 or greater';
+		}
+
+		return $missing;
+	}
+
+	/**
 	 * Sets up object properties; PHP 5 style constructor
 	 *
 	 * @return null|WP_Object_Cache If cache is disabled, returns null.
@@ -989,10 +1004,8 @@ class WP_Object_Cache {
 		$this->multisite = is_multisite();
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 
-		// apcu_sma_info() triggers a warning when APCu is disabled
-		// @codingStandardsIgnoreStart
-		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( '\LCache\NullL1' ) ) {
-		// @codingStandardsIgnoreEnd
+		$missing_requirements = self::check_missing_lcache_requirements();
+		if ( empty( $missing_requirements ) ) {
 			$l1 = new NullL1();
 			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
@@ -1014,7 +1027,7 @@ class WP_Object_Cache {
 			$this->lcache->synchronize();
 		}
 
-		if ( ! $this->is_lcache_available() && function_exists( 'add_action' ) ) {
+		if ( ! empty( $missing_requirements ) && function_exists( 'add_action' ) ) {
 			add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_lcache' ) );
 		}
 
