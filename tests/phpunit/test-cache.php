@@ -372,7 +372,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->cache_hits );
 		$this->assertEquals( 0, $this->cache->cache_misses );
 		// Duplicate of _set_internal()
-		$multisite_safe_group = $this->cache->multisite && ! isset( $this->cache->global_groups[ $group ] ) ? $this->cache->blog_prefix . $group : $group;
+		$multisite_safe_group = $this->get_multisite_safe_group( $group );
 		$this->cache->cache[ $multisite_safe_group ][ $key ] = 'beta';
 		$this->assertEquals( 'beta', $this->cache->get( $key, $group ) );
 		$this->assertEquals( 'alpha', $this->cache->get( $key, $group, true ) );
@@ -783,10 +783,10 @@ class CacheTest extends WP_UnitTestCase {
 
 		// Set the initial cache
 		$key = 'test_cache_syncronize';
-		$group = 'testgroup';
+		$group = 'test_group';
 		wp_cache_set( $key, 'first_val', $group );
 
-		$address = new \LCache\Address( $group, $key );
+		$address = new \LCache\Address( $this->get_multisite_safe_group( $group ), $key );
 		$apcu_key = 'lcache:' . $wp_object_cache->lcache->getPool() . ':' . $address->serialize();
 		$this->assertEquals( 'first_val', unserialize( apcu_fetch( $apcu_key )->value ) );
 
@@ -874,5 +874,15 @@ class CacheTest extends WP_UnitTestCase {
 			}
 		}
 		return array( $port, $socket );
+	}
+
+	/**
+	 * Get the multisite-safe version of a group name
+	 *
+	 * @param string $group
+	 * @return string
+	 */
+	private function get_multisite_safe_group( $group ) {
+		return $this->cache->multisite && ! isset( $this->cache->global_groups[ $group ] ) ? $this->cache->blog_prefix . $group : $group;
 	}
 }
