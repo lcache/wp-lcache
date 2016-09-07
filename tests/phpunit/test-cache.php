@@ -800,7 +800,7 @@ class CacheTest extends WP_UnitTestCase {
 		$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
 		$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 		$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-		$l2 = new \LCache\DatabaseL2( $dbh, '', $second_pool );
+		$l2 = new \LCache\DatabaseL2( $dbh, $table_prefix, $second_pool );
 		$integrated = new \LCache\Integrated( $l1, $l2 );
 
 		// Writing an event to the second pool will propagate to the first on reload
