@@ -275,71 +275,74 @@ class WP_Object_Cache {
 	/**
 	 * Holds the cached objects
 	 *
+	 * @access protected
 	 * @var array
-	 * @access private
 	 */
-	var $cache = array();
+	public $cache = array();
 
 	/**
 	 * The amount of times the cache data was already stored in the cache.
 	 *
-	 * @access private
+	 * @access public
 	 * @var int
 	 */
-	var $cache_hits = 0;
+	public $cache_hits = 0;
 
 	/**
 	 * Amount of times the cache did not have the request in cache
 	 *
-	 * @var int
 	 * @access public
+	 * @var int
 	 */
-	var $cache_misses = 0;
+	public $cache_misses = 0;
 
 	/**
 	 * A count of calls made to LCache
 	 *
-	 * @access private
+	 * @access public
 	 * @var int
 	 */
-	var $lcache_calls = array();
+	public $lcache_calls = array();
 
 	/**
 	 * List of global groups
 	 *
-	 * @var array
 	 * @access protected
+	 * @var array
 	 */
-	var $global_groups = array();
+	public $global_groups = array();
 
 	/**
 	 * List of non-persistent groups
 	 *
-	 * @var array
 	 * @access protected
+	 * @var array
 	 */
-	var $non_persistent_groups = array();
+	public $non_persistent_groups = array();
 
 	/**
 	 * The blog prefix to prepend to keys in non-global groups.
 	 *
+	 * @access protected
 	 * @var int
-	 * @access private
 	 */
-	var $blog_prefix;
+	public $blog_prefix;
 
 	/**
 	 * LCache instance to interact with
 	 *
+	 * @access public
 	 * @var bool
-	 * @access private
 	 */
-	var $lcache = null;
+	public $lcache = null;
 
 	/**
 	 * The last triggered error
+	 *
+	 * @access protected
+	 * @var string
 	 */
-	var $last_triggered_error = '';
+	public $last_triggered_error = '';
 
 	/**
 	 * Adds data to the cache if it doesn't already exist.
@@ -954,18 +957,8 @@ class WP_Object_Cache {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		// Default generic message
-		$message = 'Warning! LCache library or APCu is unavailable';
-		if ( ! function_exists( 'apcu_sma_info' ) ) {
-			$message = 'Warning! APCu is unavailable';
-		// @codingStandardsIgnoreStart
-		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
-		// @codingStandardsIgnoreEnd
-			$message = 'Warning! APCu is not enabled';
-		} else if ( ! class_exists( '\LCache\NullL1' ) ) {
-			$message = 'Warning! LCache library is unavailable';
-		}
-		$message .= ', which is required by WP LCache object cache.';
+		$missing_requirements = self::check_missing_lcache_requirements();
+		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache.', $missing_requirements, count( $missing_requirements ) > 1 ? 'are' : 'is' );
 		echo '<div class="message error"><p>' . esc_html( $message ) . '</p></div>';
 	}
 
@@ -979,6 +972,31 @@ class WP_Object_Cache {
 	}
 
 	/**
+	 * Check whether LCache requirements are fulfilled
+	 *
+	 * @return array
+	 */
+	protected static function check_missing_lcache_requirements() {
+		$missing = array();
+		if ( ! class_exists( '\LCache\NullL1' ) ) {
+			$missing['lcache'] = 'LCache library';
+		}
+		// apcu_sma_info() triggers a warning when APCu is disabled
+		// @codingStandardsIgnoreStart
+		if ( ! function_exists( 'apcu_sma_info' ) ) {
+			$missing['apcu-installed'] = 'APCu extension installed';
+		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+			$missing['apcu-enabled'] = 'APCu extension enabled';
+		}
+		// @codingStandardsIgnoreEnd
+		if ( -1 === version_compare( PHP_VERSION, '5.6' ) ) {
+			$missing['php'] = 'PHP 5.6 or greater';
+		}
+
+		return $missing;
+	}
+
+	/**
 	 * Sets up object properties; PHP 5 style constructor
 	 *
 	 * @return null|WP_Object_Cache If cache is disabled, returns null.
@@ -989,10 +1007,8 @@ class WP_Object_Cache {
 		$this->multisite = is_multisite();
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 
-		// apcu_sma_info() triggers a warning when APCu is disabled
-		// @codingStandardsIgnoreStart
-		if ( function_exists( 'apcu_sma_info' ) && @apcu_sma_info() && class_exists( '\LCache\NullL1' ) ) {
-		// @codingStandardsIgnoreEnd
+		$missing_requirements = self::check_missing_lcache_requirements();
+		if ( empty( $missing_requirements ) ) {
 			$l1 = new NullL1();
 			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
@@ -1009,12 +1025,12 @@ class WP_Object_Cache {
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-			$l2 = new DatabaseL2( $dbh );
+			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'] );
 			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
 		}
 
-		if ( ! $this->is_lcache_available() && function_exists( 'add_action' ) ) {
+		if ( ! empty( $missing_requirements ) && function_exists( 'add_action' ) ) {
 			add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_lcache' ) );
 		}
 
