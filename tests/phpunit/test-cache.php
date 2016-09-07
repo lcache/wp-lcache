@@ -790,17 +790,21 @@ class CacheTest extends WP_UnitTestCase {
 		$apcu_key = 'lcache:' . $wp_object_cache->lcache->getPool() . ':' . $address->serialize();
 		$this->assertEquals( 'first_val', unserialize( apcu_fetch( $apcu_key )->value ) );
 
+		// Create a new integrated cache
+		$second_pool = 'second_pool';
+		$l1 = new \LCache\NullL1( $second_pool );
+
 		// L2 isn't available as a public resource, so we need to recreate
 		list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
 		$dsn = 'mysql:host='. DB_HOST. ';port='. $port .';dbname='. DB_NAME;
 		$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
 		$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 		$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-		$l2 = new \LCache\DatabaseL2( $dbh );
+		$l2 = new \LCache\DatabaseL2( $dbh, '', $second_pool );
+		$integrated = new \LCache\Integrated( $l1, $l2 );
 
-		// Mock a event that didn't make it to APCu
-		$address = new \LCache\Address( $group, $key );
-		$event_id = $l2->set( $wp_object_cache->lcache->getPool(), $address, serialize( 'second_val' ) );
+		// Writing an event to the second pool will propagate to the first on reload
+		$integrated->set( $address, serialize( 'second_val' ) );
 
 		// Reloading the object cache will syncronize the event.
 		$this->assertEquals( 'first_val', wp_cache_get( $key, $group ) );
