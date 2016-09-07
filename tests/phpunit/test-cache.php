@@ -807,8 +807,9 @@ class CacheTest extends WP_UnitTestCase {
 	static function tearDownAfterClass() {
 		parent::tearDownAfterClass();
 		// @codingStandardsIgnoreStart
-		$GLOBALS['wpdb']->query( "TRUNCATE TABLE lcache_events" );
-		$GLOBALS['wpdb']->query( "TRUNCATE TABLE lcache_tags" );
+		$table_prefix = $GLOBALS['table_prefix'] ;
+		$GLOBALS['wpdb']->query( "TRUNCATE TABLE " . $table_prefix . "lcache_events" );
+		$GLOBALS['wpdb']->query( "TRUNCATE TABLE " . $table_prefix . "lcache_tags" );
 		unlink( ABSPATH . 'wp-content/object-cache.php' );
 		// @codingStandardsIgnoreEnd
 	}
