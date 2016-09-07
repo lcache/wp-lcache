@@ -805,7 +805,10 @@ class CacheTest extends WP_UnitTestCase {
 	 * Remove the object-cache.php from the place we've dropped it
 	 */
 	static function tearDownAfterClass() {
+		parent::tearDownAfterClass();
 		// @codingStandardsIgnoreStart
+		$GLOBALS['wpdb']->query( "TRUNCATE TABLE lcache_events" );
+		$GLOBALS['wpdb']->query( "TRUNCATE TABLE lcache_tags" );
 		unlink( ABSPATH . 'wp-content/object-cache.php' );
 		// @codingStandardsIgnoreEnd
 	}
