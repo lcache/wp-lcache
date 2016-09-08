@@ -7,6 +7,8 @@
 .DS_Store
 Thumbs.db
 bin
+behat.yml
+circle.yml
 Gruntfile.js
 package.json
 phpunit.xml
