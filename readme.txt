@@ -23,7 +23,7 @@ Go forth and make awesome! And, once you've built something great, [send us feat
 
 == Installation ==
 
-**WP LCache requires PHP 5.6 or greater with the APCu module enabled.** If you're running an older PHP version, or APCu is unavailable, you'll see an admin notice in your WordPress dashboard.
+**WP LCache requires PHP 5.6 or greater with the APCu extension enabled.** If you're running an older PHP version, or APCu is unavailable, you'll see an admin notice in your WordPress dashboard.
 
 To install WP LCache, follow these steps:
 
