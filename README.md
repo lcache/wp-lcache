@@ -59,5 +59,5 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 
 ## Changelog ##
 
-### 0.1.0 (???? ??, ????) ###
+### 0.1.0 (September 7th, 2016) ###
 * Initial release.
