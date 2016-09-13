@@ -787,8 +787,6 @@ class CacheTest extends WP_UnitTestCase {
 		wp_cache_set( $key, 'first_val', $group );
 
 		$address = new \LCache\Address( $this->get_multisite_safe_group( $group ), $key );
-		$apcu_key = 'lcache:' . $wp_object_cache->lcache->getPool() . ':' . $address->serialize();
-		$this->assertEquals( 'first_val', unserialize( apcu_fetch( $apcu_key )->value ) );
 
 		// Create a new integrated cache
 		$second_pool = 'second_pool';
@@ -808,10 +806,8 @@ class CacheTest extends WP_UnitTestCase {
 
 		// Reloading the object cache will syncronize the event.
 		$this->assertEquals( 'first_val', wp_cache_get( $key, $group ) );
-		$this->assertEquals( 'first_val', unserialize( apcu_fetch( $apcu_key )->value ) );
 		wp_cache_init();
 		$this->assertEquals( 'second_val', wp_cache_get( $key, $group ) );
-		$this->assertEquals( 'second_val', unserialize( apcu_fetch( $apcu_key )->value ) );
 	}
 
 	public function test_wp_cache_replace() {
