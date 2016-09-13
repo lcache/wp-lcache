@@ -20,7 +20,7 @@ class WP_LCache_CLI {
 		// @codingStandardsIgnoreStart
 		if ( symlink( $target, 'object-cache.php' ) ) {
 			// @codingStandardsIgnoreEnd
-			WP_CLI::success( 'Enabled WP LCache by creating wp-content/object-cache.php symlink' );
+			WP_CLI::success( 'Enabled WP LCache by creating wp-content/object-cache.php symlink.' );
 		} else {
 			WP_CLI::error( 'Failed create wp-content/object-cache.php symlink and enable WP LCache.' );
 		}
