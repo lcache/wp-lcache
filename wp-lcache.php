@@ -68,6 +68,6 @@ function wp_lcache_warn_object_cache_missing() {
 	$message = 'Warning! WP LCache object-cache.php is missing. <a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.';
 	echo '<div class="message error"><p>' . wp_kses_post( $message ) . '</p></div>';
 }
-if ( ! defined( 'WP_LCACHE_OBJECT_CACHE' ) ) {
+if ( ! defined( 'WP_LCACHE_OBJECT_CACHE' ) && function_exists( 'add_action' ) ) {
 	add_action( 'admin_notices', 'wp_lcache_warn_object_cache_missing' );
 }
