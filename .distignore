@@ -18,4 +18,5 @@ phpcs.ruleset.xml
 README.md
 wp-cli.local.yml
 tests
+/vendor/lcache/lcache/tests
 node_modules
