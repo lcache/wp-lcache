@@ -35,7 +35,7 @@ function wp_lcache_initialize_database_schema() {
 		`event_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		`pool` varchar(255) NOT NULL DEFAULT '' COMMENT 'PHP process pool that wrote the change.',
 		`address` varchar(255) DEFAULT NULL COMMENT 'Cache entry address (bin and key).',
-		`value` blob COMMENT 'A collection of data to cache.',
+		`value` longblob COMMENT 'A collection of data to cache.',
 		`expiration` int(11) DEFAULT NULL COMMENT 'A Unix timestamp indicating when the cache entry should expire, or NULL for never.',
 		`created` int(11) DEFAULT '0' COMMENT 'A Unix timestamp indicating when the cache entry was created.',
 		PRIMARY KEY (`event_id`),
