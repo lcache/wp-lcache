@@ -1044,7 +1044,7 @@ class WP_Object_Cache {
 			}
 
 			$dsn = 'mysql:host='. DB_HOST. ';port='. $port .';dbname='. DB_NAME;
-			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
+			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
 			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'] );
