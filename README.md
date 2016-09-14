@@ -58,7 +58,17 @@ PHPUnit requires the [WordPress PHPUnit test suite](https://make.wordpress.org/c
 
 Behat requires a Pantheon site. Once you've created the site, you'll need [install Terminus](https://github.com/pantheon-systems/terminus#installation), and set the `TERMINUS_TOKEN`, `TERMINUS_SITE`, and `TERMINUS_ENV` environment variables. Then, you can run `./bin/behat-prepare.sh` to prepare the site for the test suite.
 
+## Upgrade Notice ##
+
+### 0.2.2 ###
+Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
+
 ## Changelog ##
+
+### 0.2.2 (September 14th, 2016) ###
+* Updates LCache to [v0.3.1](https://github.com/lcache/lcache/releases/tag/v0.3.1), which has L2 cache guard against returning failed unserializations.
+* Sets `STRICT_ALL_TABLES` on the database handler to fail and give warnings if there are issues with database inserts.
+* Bug fix: Uses `LONGBLOB` column type for lcache_event `value` column. Previously, the `value` column was `BLOB` which meant that long cache values (e.g. alloptions) could be unexpectedly truncated.
 
 ### 0.2.1 (September 14th, 2016) ###
 * Bug fix: Properly flushes entire LCache with `wp_cache_flush()` is called. Previously, LCache was called improperly, meaning none of the cache was flushed.
