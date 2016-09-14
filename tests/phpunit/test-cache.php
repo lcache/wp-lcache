@@ -183,6 +183,16 @@ class CacheTest extends WP_UnitTestCase {
 		}
 	}
 
+	public function test_no_expire() {
+		$key = 'foo';
+		$value = 'bar';
+		wp_cache_set( $key, $value );
+		$this->assertEquals( $value, wp_cache_get( $key ) );
+		sleep( 3 );
+		wp_cache_init();
+		$this->assertEquals( $value, wp_cache_get( $key ) );
+	}
+
 	public function test_flush() {
 		global $_wp_using_ext_object_cache;
 
