@@ -885,7 +885,7 @@ class WP_Object_Cache {
 					if ( $retval < 0 ) {
 						$retval = 0;
 					}
-					$this->lcache->set( $address, $retval, 0 );
+					$this->lcache->set( $address, $retval );
 					break;
 
 				default:
