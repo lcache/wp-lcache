@@ -687,6 +687,7 @@ class WP_Object_Cache {
 			$data = serialize( $data );
 		}
 
+		$expire = 0 === $expire ? null : $expire;
 		$this->call_lcache( 'set', array( $key, $group ), $data, $expire );
 		return true;
 	}
