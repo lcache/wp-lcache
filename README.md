@@ -3,7 +3,7 @@
 **Tags:** cache, plugin  
 **Requires at least:** 4.3  
 **Tested up to:** 4.6.1  
-**Stable tag:** 0.2.0  
+**Stable tag:** 0.2.1  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -59,6 +59,9 @@ PHPUnit requires the [WordPress PHPUnit test suite](https://make.wordpress.org/c
 Behat requires a Pantheon site. Once you've created the site, you'll need [install Terminus](https://github.com/pantheon-systems/terminus#installation), and set the `TERMINUS_TOKEN`, `TERMINUS_SITE`, and `TERMINUS_ENV` environment variables. Then, you can run `./bin/behat-prepare.sh` to prepare the site for the test suite.
 
 ## Changelog ##
+
+### 0.2.1 (September 14th, 2016) ###
+* Bug fix: Properly flushes entire LCache with `wp_cache_flush()` is called. Previously, LCache was called improperly, meaning none of the cache was flushed.
 
 ### 0.2.0 (September 14th, 2016) ###
 * Updates LCache to [v0.3.0](https://github.com/lcache/lcache/releases/tag/v0.3.0), fixing issues with faulty expiration.
