@@ -184,11 +184,6 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	public function test_flush() {
-		global $_wp_using_ext_object_cache;
-
-		if ( $_wp_using_ext_object_cache ) {
-			return;
-		}
 
 		$key = rand_str();
 		$val = rand_str();
@@ -205,8 +200,10 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $this->cache->cache_misses );
 		if ( $this->cache->is_lcache_available() ) {
 			$this->assertEquals( array(
-				self::$exists     => 2,
+				self::$exists     => 1,
+				self::$get        => 1,
 				self::$set        => 1,
+				self::$delete     => 1,
 			), $this->cache->lcache_calls );
 		} else {
 			$this->assertEmpty( $this->cache->lcache_calls );

@@ -870,8 +870,12 @@ class WP_Object_Cache {
 				$this->lcache_calls[ $method ] = 0;
 			}
 			$this->lcache_calls[ $method ]++;
-			$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
-			$safe_group = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . $multisite_safe_group );
+			if ( ! is_null( $arguments[0][1] ) ) {
+				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
+				$safe_group = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . $multisite_safe_group );
+			} else {
+				$safe_group = null;
+			}
 			$address = new Address( $safe_group, $arguments[0][0] );
 			// Some LCache methods don't exist directly, so we need to mock them
 			switch ( $method ) {
