@@ -980,8 +980,8 @@ class WP_Object_Cache {
 			return;
 		}
 		$missing_requirements = self::check_missing_lcache_requirements();
-		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache.', $missing_requirements, count( $missing_requirements ) > 1 ? 'are' : 'is' );
-		echo '<div class="message error"><p>' . esc_html( $message ) . '</p></div>';
+		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache. <a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.', $missing_requirements, count( $missing_requirements ) > 1 ? 'are' : 'is' );
+		echo '<div class="message error"><p>' . wp_kses_post( $message ) . '</p></div>';
 	}
 
 	/**
