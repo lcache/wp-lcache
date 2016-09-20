@@ -22,6 +22,9 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once dirname( __FILE__ ) . '/cli.php';
+}
 
 /**
  * Create the requisite tables if they don't yet exist
