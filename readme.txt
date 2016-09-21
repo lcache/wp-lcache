@@ -43,14 +43,14 @@ If you need to install APCu, the PECL installer is the easiest way to do so.
 
 If you can't easily use PHP 5.6 or greater, you should switch to a more responsible hosting provider.
 
-=== [Admin Warnings](#warnings) ===
+= Admin notices =
 
-If any of the requirements for LCache to function are not met, you will see an admin warning. Here's how to resolve issues for each possible dependency:
+If any of the requirements for LCache to function are not met, you will see an admin notice indicating the issue. Here's how to resolve issues for each possible dependency:
 
-* "LCache database table": this indicates you have the `object-cache.php` symlink in place, but have not enabled the plugin (which installs the LCache db table). Enable the plugin and you should be good.
-* "PHP 5.6 or greater": you need to update your PHP runtime, which will also make your site faster and more secure. Do it today, or contact your hosting provider if you don't have access.
-* "APCu extension installed/enabled": you don't have the required PHP extension to power LCache. See above or contact your hosting provider.
-* "LCache library": you're probably installing direct from GitHub, not a download from wordpress.org/plugins. Awesome! You just need  to run `composer install --no-dev` inside the `wp-lcache` directory, and make sure the resulting `vendor` directory is deployed along with the rest of `wp-lcache`.
+* "LCache database table": This indicates you have the `object-cache.php` symlink in place, but have not activated the plugin (which installs the LCache db table). Activate the plugin and verify the LCache tables are created.
+* "PHP 5.6 or greater": You need to update your PHP runtime, which will also make your site faster and more secure. Do it today, or contact your hosting provider if you don't have access.
+* "APCu extension installed/enabled": You don't have the required PHP extension to power LCache. See above instructions for installing APCU, or contact your hosting provider.
+* "LCache library": you're probably installing direct from GitHub, not a download from the WordPress.org plugins directory. Awesome! You just need  to run `composer install --no-dev` inside the `wp-lcache` directory, and make sure the resulting `vendor` directory is deployed along with the rest of `wp-lcache`.
 
 == Contributing ==
 
