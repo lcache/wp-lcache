@@ -345,6 +345,13 @@ class WP_Object_Cache {
 	public $last_triggered_error = '';
 
 	/**
+	 * Any requirements that are missing.
+	 *
+	 * @var array
+	 */
+	public $missing_requirements = array();
+
+	/**
 	 * Adds data to the cache if it doesn't already exist.
 	 *
 	 * @uses WP_Object_Cache::_exists Checks to see if the cache already has data.
@@ -979,8 +986,7 @@ class WP_Object_Cache {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$missing_requirements = self::check_missing_lcache_requirements();
-		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache. <a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.', $missing_requirements, count( $missing_requirements ) > 1 ? 'are' : 'is' );
+		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache. <a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.', $this->missing_requirements, count( $this->missing_requirements ) > 1 ? 'are' : 'is' );
 		echo '<div class="message error"><p>' . wp_kses_post( $message ) . '</p></div>';
 	}
 
@@ -1029,8 +1035,8 @@ class WP_Object_Cache {
 		$this->multisite = is_multisite();
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 
-		$missing_requirements = self::check_missing_lcache_requirements();
-		if ( empty( $missing_requirements ) ) {
+		$this->missing_requirements = self::check_missing_lcache_requirements();
+		if ( empty( $this->missing_requirements ) ) {
 			$l1 = new NullL1();
 			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
@@ -1047,17 +1053,20 @@ class WP_Object_Cache {
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'] );
+			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'], true );
 			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
-
-			if ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
+			// Assume LCache is failed if there are database errors
+			if ( $errors = $l2->getErrors() ) {
+				$this->missing_requirements['database-error'] = 'LCache database table';
+				$this->lcache = null;
+			} else if ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
 				add_action( 'init', array( $this, 'wp_action_init_register_cron' ) );
 				add_action( 'wp_lcache_collect_garbage', array( $this, 'wp_action_wp_lcache_collect_garbage' ) );
 			}
 		}
 
-		if ( ! empty( $missing_requirements ) && function_exists( 'add_action' ) ) {
+		if ( ! empty( $this->missing_requirements ) && function_exists( 'add_action' ) ) {
 			add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_lcache' ) );
 		}
 
