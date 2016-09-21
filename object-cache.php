@@ -980,6 +980,11 @@ class WP_Object_Cache {
 			return;
 		}
 		$missing_requirements = self::check_missing_lcache_requirements();
+		// @codingStandardsIgnoreStart
+		if ( ! $GLOBALS['wpdb']->query( "SHOW TABLES LIKE '{$GLOBALS['table_prefix']}lcache'" ) ) {
+			$missing_requirements['database-error'] = 'LCache database table';
+		}
+		// @codingStandardsIgnoreEnd
 		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache. <a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.', $missing_requirements, count( $missing_requirements ) > 1 ? 'are' : 'is' );
 		echo '<div class="message error"><p>' . wp_kses_post( $message ) . '</p></div>';
 	}
@@ -1047,11 +1052,14 @@ class WP_Object_Cache {
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'] );
+			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'], true );
 			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
-
-			if ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
+			// Assume LCache is failed if there are database errors
+			if ( $errors = $l2->getErrors() ) {
+				$missing_requirements[] = 'database-error';
+				$this->lcache = null;
+			} else if ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
 				add_action( 'init', array( $this, 'wp_action_init_register_cron' ) );
 				add_action( 'wp_lcache_collect_garbage', array( $this, 'wp_action_wp_lcache_collect_garbage' ) );
 			}
