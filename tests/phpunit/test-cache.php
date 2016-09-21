@@ -423,6 +423,42 @@ class CacheTest extends WP_UnitTestCase {
 		}
 	}
 
+	public function test_incr_separate_groups() {
+		$key = rand_str();
+		$group1 = 'group1';
+		$group2 = 'group2';
+
+		$this->assertFalse( $this->cache->incr( $key, 1, $group1 ) );
+		$this->assertFalse( $this->cache->incr( $key, 1, $group2 ) );
+		$this->assertEquals( 0, $this->cache->cache_hits );
+		$this->assertEquals( 0, $this->cache->cache_misses );
+
+		$this->cache->set( $key, 0, $group1 );
+		$this->cache->incr( $key, 1, $group1 );
+		$this->cache->set( $key, 0, $group2 );
+		$this->cache->incr( $key, 1, $group2 );
+		$this->assertEquals( 1, $this->cache->get( $key, $group1 ) );
+		$this->assertEquals( 1, $this->cache->get( $key, $group2 ) );
+		$this->assertEquals( 2, $this->cache->cache_hits );
+		$this->assertEquals( 0, $this->cache->cache_misses );
+
+		$this->cache->incr( $key, 2, $group1 );
+		$this->cache->incr( $key, 1, $group2 );
+		$this->assertEquals( 3, $this->cache->get( $key, $group1 ) );
+		$this->assertEquals( 2, $this->cache->get( $key, $group2 ) );
+		$this->assertEquals( 4, $this->cache->cache_hits );
+		$this->assertEquals( 0, $this->cache->cache_misses );
+		if ( $this->cache->is_lcache_available() ) {
+			$this->assertEquals( array(
+				self::$exists     => 2,
+				self::$set        => 2,
+				self::$incr       => 4,
+			), $this->cache->lcache_calls );
+		} else {
+			$this->assertEmpty( $this->cache->lcache_calls );
+		}
+	}
+
 	public function test_incr_never_below_zero() {
 		$key = rand_str();
 		$this->cache->set( $key, 1 );
@@ -508,7 +544,52 @@ class CacheTest extends WP_UnitTestCase {
 			$this->assertEquals( array(
 				self::$exists     => 1,
 				self::$set        => 2,
-				self::$decr     => 3,
+				self::$decr       => 3,
+			), $this->cache->lcache_calls );
+		} else {
+			$this->assertEmpty( $this->cache->lcache_calls );
+		}
+	}
+	
+	public function test_decr_separate_groups() {
+		$key = rand_str();
+		$group1 = 'group1';
+		$group2 = 'group2';
+
+		$this->assertFalse( $this->cache->decr( $key, 1, $group1 ) );
+		$this->assertFalse( $this->cache->decr( $key, 1, $group2 ) );
+		$this->assertEquals( 0, $this->cache->cache_hits );
+		$this->assertEquals( 0, $this->cache->cache_misses );
+
+		$this->cache->set( $key, 0, $group1 );
+		$this->cache->decr( $key, 1, $group1 );
+		$this->cache->set( $key, 0, $group2 );
+		$this->cache->decr( $key, 1, $group2 );
+		$this->assertEquals( 0, $this->cache->get( $key, $group1 ) );
+		$this->assertEquals( 0, $this->cache->get( $key, $group2 ) );
+		$this->assertEquals( 2, $this->cache->cache_hits );
+		$this->assertEquals( 0, $this->cache->cache_misses );
+
+		$this->cache->set( $key, 3, $group1 );
+		$this->cache->decr( $key, 1, $group1 );
+		$this->cache->set( $key, 2, $group2 );
+		$this->cache->decr( $key, 1, $group2 );
+		$this->assertEquals( 2, $this->cache->get( $key, $group1 ) );
+		$this->assertEquals( 1, $this->cache->get( $key, $group2 ) );
+		$this->assertEquals( 4, $this->cache->cache_hits );
+		$this->assertEquals( 0, $this->cache->cache_misses );
+
+		$this->cache->decr( $key, 2, $group1 );
+		$this->cache->decr( $key, 2, $group2 );
+		$this->assertEquals( 0, $this->cache->get( $key, $group1 ) );
+		$this->assertEquals( 0, $this->cache->get( $key, $group2 ) );
+		$this->assertEquals( 6, $this->cache->cache_hits );
+		$this->assertEquals( 0, $this->cache->cache_misses );
+		if ( $this->cache->is_lcache_available() ) {
+			$this->assertEquals( array(
+				self::$exists     => 2,
+				self::$set        => 4,
+				self::$decr       => 6,
 			), $this->cache->lcache_calls );
 		} else {
 			$this->assertEmpty( $this->cache->lcache_calls );
