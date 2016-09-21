@@ -550,7 +550,7 @@ class CacheTest extends WP_UnitTestCase {
 			$this->assertEmpty( $this->cache->lcache_calls );
 		}
 	}
-	
+
 	public function test_decr_separate_groups() {
 		$key = rand_str();
 		$group1 = 'group1';
