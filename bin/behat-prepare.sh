@@ -42,7 +42,7 @@ rm -rf $PREPARE_DIR/wp-content/plugins/wp-lcache/.git
 cd $PREPARE_DIR/wp-content
 ln -s plugins/wp-lcache/object-cache.php object-cache.php
 cd $PREPARE_DIR/wp-content/plugins/wp-lcache/
-composer install --no-dev
+composer install --no-dev --no-scripts
 rm -rf $PREPARE_DIR/wp-content/plugins/wp-lcache/vendor/lcache/lcache/.git
 
 
