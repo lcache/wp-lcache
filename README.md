@@ -3,7 +3,7 @@
 **Tags:** cache, plugin  
 **Requires at least:** 4.3  
 **Tested up to:** 4.6.1  
-**Stable tag:** 0.2.2  
+**Stable tag:** 0.3.0  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -43,7 +43,7 @@ If you need to install APCu, the PECL installer is the easiest way to do so.
 
 If you can't easily use PHP 5.6 or greater, you should switch to a more responsible hosting provider.
 
-### Admin notices ###
+### Admin Notices ###
 
 If any of the requirements for LCache to function are not met, you will see an admin notice indicating the issue. Here's how to resolve issues for each possible dependency:
 
@@ -77,6 +77,11 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
 
 ## Changelog ##
+
+### 0.3.0 (September 21st, 2016) ###
+* Introduces the `wp lcache enable` WP-CLI command to create the `object-cache.php` symlink.
+* Updates LCache to [v0.3.2](https://github.com/lcache/lcache/releases/tag/v0.3.2), which is more noisy about failed L2 serialization.
+* Better admin notices: alerts when LCache database tables are missing, or if the plugin is active but `object-cache.php` is missing.
 
 ### 0.2.2 (September 14th, 2016) ###
 * Updates LCache to [v0.3.1](https://github.com/lcache/lcache/releases/tag/v0.3.1), which has L2 cache guard against returning failed unserializations.
