@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d82d8987fa7552d66483788d2221d8f5",
-    "content-hash": "7d07ea2160aec08b0c2610dfd27eaedc",
+    "hash": "f63c73ddeb2389418778666da3ba0e0a",
+    "content-hash": "3d18f905bf5ab470754ab24889118e90",
     "packages": [
         {
             "name": "lcache/lcache",
-            "version": "v0.3.2",
+            "version": "v0.3.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lcache/lcache.git",
-                "reference": "95e34d9ff8529746f836eef649a64a595fe988cc"
+                "reference": "30248efbdd38aa9308aedae9c4103174ae7cfe1c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lcache/lcache/zipball/95e34d9ff8529746f836eef649a64a595fe988cc",
-                "reference": "95e34d9ff8529746f836eef649a64a595fe988cc",
+                "url": "https://api.github.com/repos/lcache/lcache/zipball/30248efbdd38aa9308aedae9c4103174ae7cfe1c",
+                "reference": "30248efbdd38aa9308aedae9c4103174ae7cfe1c",
                 "shasum": ""
             },
             "require": {
@@ -52,7 +52,7 @@
                 }
             ],
             "description": "LCache library.",
-            "time": "2016-09-20 19:48:17"
+            "time": "2016-09-22 18:54:54"
         }
     ],
     "packages-dev": [
