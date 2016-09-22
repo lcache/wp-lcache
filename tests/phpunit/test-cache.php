@@ -910,6 +910,11 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertFalse( wp_cache_get( $fake_key ) );
 	}
 
+	public function test_cache_set_high_ttl() {
+		$this->cache->set( 'foo', 'bar', 'group', 50 * YEAR_IN_SECONDS );
+		$this->assertEquals( 'bar', $this->cache->get( 'foo', 'group' ) );
+	}
+
 	public function tearDown() {
 		parent::tearDown();
 		$this->flush_cache();
