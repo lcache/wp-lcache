@@ -3,7 +3,7 @@ Contributors: getpantheon, danielbachhuber, stevector
 Tags: cache, plugin
 Requires at least: 4.3
 Tested up to: 4.6.1
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,9 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
 
 == Changelog ==
+
+= 0.3.1 (September 22nd, 2016) =
+* Updates LCache to [v0.3.4](https://github.com/lcache/lcache/releases/tag/v0.3.4), which automatically detects and handles misuse of the TTL as an expiration timestamp.
 
 = 0.3.0 (September 21st, 2016) =
 * Introduces the `wp lcache enable` WP-CLI command to create the `object-cache.php` symlink.
