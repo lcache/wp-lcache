@@ -3,7 +3,7 @@
 class WP_LCache_CLI {
 
 	/**
-	 * Enable WP LCache by creating the symlink for object-cache.php
+	 * Enable WP LCache by creating a stub for object-cache.php
 	 */
 	public function enable() {
 		if ( defined( 'WP_LCACHE_OBJECT_CACHE' ) && WP_LCACHE_OBJECT_CACHE ) {
@@ -15,52 +15,45 @@ class WP_LCache_CLI {
 			WP_CLI::error( 'Unknown wp-content/object-cache.php already exists.' );
 		}
 		$object_cache = dirname( __FILE__ ) . '/object-cache.php';
-		$target = self::get_relative_path( $drop_in, $object_cache );
-		chdir( WP_CONTENT_DIR );
+		$target = str_replace( WP_CONTENT_DIR, '', $object_cache );
 		// @codingStandardsIgnoreStart
-		if ( symlink( $target, 'object-cache.php' ) ) {
+		if ( self::make_stub( $target ) ) {
 			// @codingStandardsIgnoreEnd
-			WP_CLI::success( 'Enabled WP LCache by creating wp-content/object-cache.php symlink.' );
+			WP_CLI::success( 'Enabled WP LCache by creating wp-content/object-cache.php stub file.' );
 		} else {
-			WP_CLI::error( 'Failed create wp-content/object-cache.php symlink and enable WP LCache.' );
+			WP_CLI::error( 'Failed create wp-content/object-cache.php stub to enable WP LCache.' );
 		}
 	}
 
 	/**
-	 * Get the relative path between two files
-	 *
-	 * @see http://stackoverflow.com/questions/2637945/getting-relative-path-from-absolute-path-in-php
+	 * Stub contents.
 	 */
-	private static function get_relative_path( $from, $to ) {
-		// some compatibility fixes for Windows paths
-		$from = is_dir( $from ) ? rtrim( $from, '\/' ) . '/' : $from;
-		$to   = is_dir( $to )   ? rtrim( $to, '\/' ) . '/'   : $to;
-		$from = str_replace( '\\', '/', $from );
-		$to   = str_replace( '\\', '/', $to );
+	private function make_stub( $target ) {
+		$stub = <<<EndPHPBlock
+<?php
+# Engage LCache object caching system.
+# We use a 'require_once()' here because in PHP 5.5+ changes to symlinks
+# are not detected by the opcode cache, making it frustrating to deploy.
+#
+# More info: http://codinghobo.com/opcache-and-symlink-based-deployments/
+#
 
-		$from     = explode( '/', $from );
-		$to       = explode( '/', $to );
-		$relPath  = $to;
-
-		foreach ( $from as $depth => $dir ) {
-			// find first non-matching dir
-			if ( $dir === $to[ $depth ] ) {
-				// ignore this directory
-				array_shift( $relPath );
-			} else {
-				// get number of remaining dirs to $from
-				$remaining = count( $from ) - $depth;
-				if ( $remaining > 1 ) {
-					// add traversals up to first matching dir
-					$padLength = ( count( $relPath ) + $remaining - 1 ) * -1;
-					$relPath = array_pad( $relPath, $padLength, '..' );
-					break;
-				} else {
-					$relPath[0] = './' . $relPath[0];
-				}
-			}
+\$lcache_path = dirname( realpath( __FILE__ ) ) . '$target';
+require_once( \$lcache_path );
+EndPHPBlock;
+		chdir( WP_CONTENT_DIR );
+		try {
+			$fp = fopen( 'object-cache.php', 'w' );
+			// @codingStandardsIgnoreStart
+			// It's ok to write files.
+			fwrite( $fp, $stub );
+			// @codingStandardsIgnoreEnd
+			fclose( $fp );
+		} catch (Exception $e) {
+			// TODO: more granular exception handling?
+			return false;
 		}
-		return implode( '/', $relPath );
+		return true;
 	}
 
 }
