@@ -15,7 +15,7 @@ class WP_LCache_CLI {
 			WP_CLI::error( 'Unknown wp-content/object-cache.php already exists.' );
 		}
 		$object_cache = dirname( __FILE__ ) . '/object-cache.php';
-		$target = str_replace(WP_CONTENT_DIR, '', $object_cache);
+		$target = str_replace( WP_CONTENT_DIR, '', $object_cache );
 		// @codingStandardsIgnoreStart
 		if ( self::make_stub( $target ) ) {
 			// @codingStandardsIgnoreEnd
@@ -28,7 +28,7 @@ class WP_LCache_CLI {
 	/**
 	 * Stub contents.
 	 */
-	private function make_stub($target) {
+	private function make_stub( $target ) {
 		$stub = <<<EndPHPBlock
 <?php
 # Engage LCache object caching system.
@@ -44,10 +44,12 @@ EndPHPBlock;
 		chdir( WP_CONTENT_DIR );
 		try {
 			$fp = fopen( 'object-cache.php', 'w' );
+			// @codingStandardsIgnoreStart
+			// It's ok to write files.
 			fwrite( $fp, $stub );
+			// @codingStandardsIgnoreEnd
 			fclose( $fp );
-		}
-		catch (Exception $e) {
+		} catch (Exception $e) {
 			// TODO: more granular exception handling?
 			return false;
 		}
