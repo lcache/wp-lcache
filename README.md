@@ -32,18 +32,15 @@ To install WP LCache, follow these steps:
 2. Activate the plugin, to ensure LCache's database tables are created. These are created on the plugin activation hook.
 3. Create a stub file at `wp-content/object-cache` with the following content:
 
-```
-<?php
-# Engage LCache object caching system.
-# We use a 'require_once()' here because in PHP 5.5+ changes to symlinks
-# are not detected by the opcode cache, making it frustrating to deploy.
-#
-# More info: http://codinghobo.com/opcache-and-symlink-based-deployments/
-#
-
-$lcache_path = dirname( realpath( __FILE__ ) ) . '/plugins/wp-lcache/object-cache.php';
-require_once( $lcache_path );
-```
+    <?php
+    # Engage LCache object caching system.
+    # We use a 'require_once()' here because in PHP 5.5+ changes to symlinks
+    # are not detected by the opcode cache, making it frustrating to deploy.
+    #
+    # More info: http://codinghobo.com/opcache-and-symlink-based-deployments/
+    #
+    $lcache_path = dirname( realpath( __FILE__ ) ) . '/plugins/wp-lcache/object-cache.php';
+    require_once( $lcache_path );
 
 To install WP LCache in one line with WP-CLI:
 
