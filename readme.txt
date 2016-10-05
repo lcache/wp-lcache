@@ -30,7 +30,9 @@ To install WP LCache, follow these steps:
 1. Install the plugin from WordPress.org using the WordPress dashboard.
 1a. Those installing from Github will need to run `composer install --no-dev --no-scripts` after cloning to get the [LCache library](https://github.com/lcache/lcache).
 2. Activate the plugin, to ensure LCache's database tables are created. These are created on the plugin activation hook.
-3. Create a stub file at `wp-content/object-cache` with the following content:
+3. Create a stub file at `wp-content/object-cache` to require `wp-lcache/object-cache.php`.
+
+The stub file should contain:
 
     <?php
     # Engage LCache object caching system.
