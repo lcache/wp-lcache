@@ -3,7 +3,7 @@
 **Tags:** cache, plugin  
 **Requires at least:** 4.3  
 **Tested up to:** 4.6.1  
-**Stable tag:** 0.3.1  
+**Stable tag:** 0.4.0  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -42,7 +42,7 @@ To install WP LCache, follow these steps:
 #
 
 $lcache_path = dirname( realpath( __FILE__ ) ) . '/plugins/wp-lcache/object-cache.php';
-require( $lcache_path );
+require_once( $lcache_path );
 ```
 
 To install WP LCache in one line with WP-CLI:
@@ -90,6 +90,9 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
 
 ## Changelog ##
+
+### 0.4.0 (October 5th, 2016) ###
+* Switches to stub file approach for enabling object cache drop-in, because symlink changes aren't detected by opcode cache in PHP 5.5+.
 
 ### 0.3.1 (September 22nd, 2016) ###
 * Updates LCache to [v0.3.4](https://github.com/lcache/lcache/releases/tag/v0.3.4), which automatically detects and handles misuse of the TTL as an expiration timestamp.
