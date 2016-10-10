@@ -30,7 +30,7 @@ before_script:
         bash bin/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
         if [[ "$PHP_APCU" == "enabled" ]] ; then
           if [[ ${TRAVIS_PHP_VERSION:0:3} == "7.0" ]]; then
-            echo "no" | pecl install apcu
+            echo "no" | pecl install channel://pecl.php.net/apcu-5.1.5
           else
             echo "no\nno" | pecl install channel://pecl.php.net/apcu-4.0.11
           fi
