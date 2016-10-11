@@ -37,6 +37,12 @@ before_script:
           echo "apc.enable_cli='on'" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
         fi
       fi
+    - |
+      if [[ ${TRAVIS_PHP_VERSION:0:3} == "7.0" ]]; then
+        composer global require "phpunit/phpunit=5.6.*"
+      else
+        composer global require "phpunit/phpunit=4.8.*"
+      fi
     - composer install
     - |
       if [[ "$WP_TRAVISCI" == "phpcs" ]] ; then
