@@ -43,7 +43,7 @@ before_script:
       else
         composer global require "phpunit/phpunit=4.8.*"
       fi
-    - export PATH="$HOME/.composer/vendor/bin:$PATH
+    - export PATH="$HOME/.composer/vendor/bin:$PATH"
     - composer install
     - |
       if [[ "$WP_TRAVISCI" == "phpcs" ]] ; then
