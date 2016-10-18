@@ -925,9 +925,11 @@ class CacheTest extends WP_UnitTestCase {
 		if ( ! $this->cache->is_lcache_available() ) {
 			$this->markTestSkipped( 'LCache is not available.' );
 		}
+		// @codingStandardsIgnoreStart
 		$wpdb->query( "ALTER TABLE `{$table_prefix}lcache_events` MODIFY COLUMN value varchar(2)" );
 		$this->altered_value_column = true;
 		$ret = $wpdb->get_results( "SHOW CREATE TABLE `{$table_prefix}lcache_events`" );
+		// @codingStandardsIgnoreEnd
 		$this->assertContains( '`value` varchar(2) DEFAULT NULL,', $ret[0]->{'Create Table'} );
 		$this->cache->set( 'foo', 'basjkfsdfsdksd' );
 	}
@@ -935,7 +937,9 @@ class CacheTest extends WP_UnitTestCase {
 	public function tearDown() {
 		global $wpdb, $table_prefix;
 		if ( $this->altered_value_column ) {
+			// @codingStandardsIgnoreStart
 			$wpdb->query( "ALTER TABLE `{$table_prefix}lcache_events` MODIFY COLUMN value LONGBLOB" );
+			// @codingStandardsIgnoreEnd
 			$this->altered_value_column = false;
 		}
 		parent::tearDown();
