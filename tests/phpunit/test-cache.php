@@ -19,6 +19,8 @@ class CacheTest extends WP_UnitTestCase {
 
 	private static $delete;
 
+	private $altered_value_column = false;
+
 	public function setUp() {
 		parent::setUp();
 		// create two cache objects with a shared cache dir
@@ -915,7 +917,31 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 'bar', $this->cache->get( 'foo', 'group' ) );
 	}
 
+	/**
+	 * @expectedException PDOException
+	 */
+	public function test_invalid_schema_produces_warning() {
+		global $wpdb, $table_prefix;
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
+		}
+		// @codingStandardsIgnoreStart
+		$wpdb->query( "ALTER TABLE `{$table_prefix}lcache_events` MODIFY COLUMN value varchar(2)" );
+		$this->altered_value_column = true;
+		$ret = $wpdb->get_results( "SHOW CREATE TABLE `{$table_prefix}lcache_events`" );
+		// @codingStandardsIgnoreEnd
+		$this->assertContains( '`value` varchar(2) DEFAULT NULL,', $ret[0]->{'Create Table'} );
+		$this->cache->set( 'foo', 'basjkfsdfsdksd' );
+	}
+
 	public function tearDown() {
+		global $wpdb, $table_prefix;
+		if ( $this->altered_value_column ) {
+			// @codingStandardsIgnoreStart
+			$wpdb->query( "ALTER TABLE `{$table_prefix}lcache_events` MODIFY COLUMN value LONGBLOB" );
+			// @codingStandardsIgnoreEnd
+			$this->altered_value_column = false;
+		}
 		parent::tearDown();
 		$this->flush_cache();
 	}
@@ -931,6 +957,22 @@ class CacheTest extends WP_UnitTestCase {
 		$GLOBALS['wpdb']->query( "TRUNCATE TABLE " . $table_prefix . "lcache_tags" );
 		unlink( ABSPATH . 'wp-content/object-cache.php' );
 		// @codingStandardsIgnoreEnd
+	}
+
+	function _create_temporary_tables( $query ) {
+		global $table_prefix;
+		if ( 0 === stripos( trim( $query ), "CREATE TABLE IF NOT EXISTS `{$table_prefix}lcache" ) ) {
+			return $query;
+		}
+		return parent::_create_temporary_tables( $query );
+	}
+
+	function _drop_temporary_tables( $query ) {
+		global $table_prefix;
+		if ( 0 === stripos( trim( $query ), "DROP TABLE `{$table_prefix}lcache" ) ) {
+			return $query;
+		}
+		return parent::_drop_temporary_tables( $query );
 	}
 
 	/**
