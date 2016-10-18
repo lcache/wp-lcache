@@ -918,16 +918,16 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	/**
-     * @expectedException PDOException
-     */
+	 * @expectedException PDOException
+	 */
 	public function test_invalid_schema_produces_warning() {
 		global $wpdb, $table_prefix;
 		if ( ! $this->cache->is_lcache_available() ) {
 			$this->markTestSkipped( 'LCache is not available.' );
 		}
-		$wpdb->query( "ALTER TABLE {$table_prefix}lcache_events MODIFY COLUMN value varchar(2)" );
+		$wpdb->query( "ALTER TABLE `{$table_prefix}lcache_events` MODIFY COLUMN value varchar(2)" );
 		$this->altered_value_column = true;
-		$ret = $wpdb->get_results( "SHOW CREATE TABLE {$table_prefix}lcache_events" );
+		$ret = $wpdb->get_results( "SHOW CREATE TABLE `{$table_prefix}lcache_events`" );
 		$this->assertContains( '`value` varchar(2) DEFAULT NULL,', $ret[0]->{'Create Table'} );
 		$this->cache->set( 'foo', 'basjkfsdfsdksd' );
 	}
@@ -935,7 +935,7 @@ class CacheTest extends WP_UnitTestCase {
 	public function tearDown() {
 		global $wpdb, $table_prefix;
 		if ( $this->altered_value_column ) {
-			$wpdb->query( "ALTER TABLE {$table_prefix}lcache_events MODIFY COLUMN value LONGBLOB" );
+			$wpdb->query( "ALTER TABLE `{$table_prefix}lcache_events` MODIFY COLUMN value LONGBLOB" );
 			$this->altered_value_column = false;
 		}
 		parent::tearDown();
