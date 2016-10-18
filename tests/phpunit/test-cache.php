@@ -922,6 +922,9 @@ class CacheTest extends WP_UnitTestCase {
      */
 	public function test_invalid_schema_produces_warning() {
 		global $wpdb, $table_prefix;
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
+		}
 		$wpdb->query( "ALTER TABLE {$table_prefix}lcache_events MODIFY COLUMN value varchar(2)" );
 		$this->altered_value_column = true;
 		$ret = $wpdb->get_results( "SHOW CREATE TABLE {$table_prefix}lcache_events" );
