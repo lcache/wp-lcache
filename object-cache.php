@@ -993,7 +993,13 @@ class WP_Object_Cache {
 	 * Get the missing requirements error message
 	 */
 	private function get_missing_requirements_error_message() {
-		return sprintf( 'Warning! Missing %s, which %s required by WP LCache object cache. <a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.', implode( ', ', $this->missing_requirements ), count( $this->missing_requirements ) > 1 ? 'are' : 'is' );
+		$message = sprintf( 'Warning! Missing %s, which %s required by WP LCache object cache. ', implode( ', ', $this->missing_requirements ), count( $this->missing_requirements ) > 1 ? 'are' : 'is' );
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			$message .= 'See "Installation" for more details: https://wordpress.org/plugins/wp-lcache/installation/';
+		} else {
+			$message .= '<a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.';
+		}
+		return $message;
 	}
 
 	/**
