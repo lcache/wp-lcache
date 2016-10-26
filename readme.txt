@@ -53,6 +53,8 @@ If you need to install APCu, the PECL installer is the easiest way to do so.
 * PHP 7.0: `pecl install apcu`
 * PHP 5.6: `pecl install channel://pecl.php.net/apcu-4.0.11`
 
+Enabling APCu for CLI is a matter of adding `apc.enable_cli='on'` to your `etc/php5/cli/php.ini`.
+
 If you can't easily use PHP 5.6 or greater, you should switch to a more responsible hosting provider.
 
 = Admin Notices =
