@@ -934,6 +934,43 @@ class CacheTest extends WP_UnitTestCase {
 		$this->cache->set( 'foo', 'basjkfsdfsdksd' );
 	}
 
+	public function test_split_alloptions_into_separate_keys() {
+		global $wp_object_cache;
+
+		if ( ! $this->cache->is_lcache_available() ) {
+			$this->markTestSkipped( 'LCache is not available.' );
+		}
+
+		update_option( 'lcache_object', 'bar' );
+		update_option( 'lcache_fruit', 'banana' );
+
+		// Initialize two object caches with the same state.
+		$first_cache =& $this->init_cache();
+		$second_cache =& $this->init_cache();
+
+		// Prime alloptions cache for first cache
+		$wp_object_cache = $first_cache;
+		get_option( 'lcache_object' );
+		// Prime alloptions cache for second cache
+		$wp_object_cache = $second_cache;
+		get_option( 'lcache_object' );
+
+		// Write a new value to the first option with the first cache
+		$wp_object_cache = $first_cache;
+		update_option( 'lcache_object', 'stick' );
+
+		// Write a new value to the second option with the second cache
+		// Updating this second option shouldn't overwrite cache value for the first
+		$wp_object_cache = $second_cache;
+		update_option( 'lcache_fruit', 'orange' );
+
+		// Ensure a new request has the correct values for both written options
+		$third_cache =& $this->init_cache();
+		$wp_object_cache = $third_cache;
+		$this->assertEquals( 'orange', get_option( 'lcache_fruit' ) );
+		$this->assertEquals( 'stick', get_option( 'lcache_object' ) );
+	}
+
 	public function tearDown() {
 		global $wpdb, $table_prefix;
 		if ( $this->altered_value_column ) {
