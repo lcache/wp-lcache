@@ -951,24 +951,52 @@ class CacheTest extends WP_UnitTestCase {
 		// Prime alloptions cache for first cache
 		$wp_object_cache = $first_cache;
 		get_option( 'lcache_object' );
+		$this->assertEquals( 'bar', $first_cache->get( 'lcache_object', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 'banana', $first_cache->get( 'lcache_fruit','lcache_alloptions_values' ) );
 		// Prime alloptions cache for second cache
 		$wp_object_cache = $second_cache;
 		get_option( 'lcache_object' );
+		$this->assertEquals( 'bar', $second_cache->get( 'lcache_object', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 'banana', $second_cache->get( 'lcache_fruit', 'lcache_alloptions_values' ) );
 
 		// Write a new value to the first option with the first cache
 		$wp_object_cache = $first_cache;
 		update_option( 'lcache_object', 'stick' );
+		$wp_object_cache->cache_hits = $wp_object_cache->cache_misses = 0;
+		$this->assertEquals( 'stick', $first_cache->get( 'lcache_object', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 'banana', $first_cache->get( 'lcache_fruit', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 2, $wp_object_cache->cache_hits );
+		$this->assertEquals( 0, $wp_object_cache->cache_misses );
 
 		// Write a new value to the second option with the second cache
 		// Updating this second option shouldn't overwrite cache value for the first
 		$wp_object_cache = $second_cache;
 		update_option( 'lcache_fruit', 'orange' );
+		$wp_object_cache->cache_hits = $wp_object_cache->cache_misses = 0;
+		$this->assertEquals( 'orange', $second_cache->get( 'lcache_fruit', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 'bar', $second_cache->get( 'lcache_object', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 2, $wp_object_cache->cache_hits );
+		$this->assertEquals( 0, $wp_object_cache->cache_misses );
 
 		// Ensure a new request has the correct values for both written options
 		$third_cache =& $this->init_cache();
 		$wp_object_cache = $third_cache;
 		$this->assertEquals( 'orange', get_option( 'lcache_fruit' ) );
 		$this->assertEquals( 'stick', get_option( 'lcache_object' ) );
+		$wp_object_cache->cache_hits = $wp_object_cache->cache_misses = 0;
+		$this->assertEquals( 'stick', $third_cache->get( 'lcache_object', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 'orange', $third_cache->get( 'lcache_fruit', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 2, $wp_object_cache->cache_hits );
+		$this->assertEquals( 0, $wp_object_cache->cache_misses );
+
+		// Ensure deleting an option works as expected
+		delete_option( 'lcache_fruit' );
+		$wp_object_cache->cache_hits = $wp_object_cache->cache_misses = 0;
+		$this->assertEmpty( $third_cache->get( 'lcache_fruit', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 'stick', $third_cache->get( 'lcache_object', 'lcache_alloptions_values' ) );
+		$this->assertEquals( 1, $wp_object_cache->cache_hits );
+		$this->assertEquals( 1, $wp_object_cache->cache_misses );
+
 	}
 
 	public function tearDown() {
