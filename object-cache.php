@@ -468,6 +468,10 @@ class WP_Object_Cache {
 			$group = 'default';
 		}
 
+		if ( 'alloptions' === $key && 'options' === $group ) {
+			return $this->delete_alloptions( $force );
+		}
+
 		if ( ! $force && ! $this->exists( $key, $group ) ) {
 			return false;
 		}
@@ -769,6 +773,23 @@ class WP_Object_Cache {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Delete combined alloptions from separate cache keys and values.
+	 *
+	 * @param bool $force Optional. Whether to force the unsetting of the cache
+	 *		key in the group
+	 * @return boolean
+	 */
+	protected function delete_alloptions( $force = false ) {
+		$keys = $this->get( 'keys', 'lcache_alloptions_keys', $force );
+		if ( ! empty( $keys ) && is_array( $keys ) ) {
+			foreach ( array_keys( $keys ) as $key ) {
+				$this->delete( $key, 'lcache_alloptions_values', $force );
+			}
+		}
+		return $this->delete( 'keys', 'lcache_alloptions_keys' );
 	}
 
 	/**

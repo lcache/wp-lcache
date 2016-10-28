@@ -997,6 +997,11 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $wp_object_cache->cache_hits );
 		$this->assertEquals( 1, $wp_object_cache->cache_misses );
 
+		// Ensure deleting alloptions works as expected
+		wp_cache_delete( 'alloptions', 'options' );
+		$this->assertEmpty( wp_cache_get( 'lcache_object', 'lcache_alloptions_values' ) );
+		$this->assertEmpty( wp_cache_get( 'keys', 'lcache_alloptions_keys' ) );
+
 	}
 
 	public function tearDown() {
