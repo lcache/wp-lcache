@@ -1079,8 +1079,20 @@ class WP_Object_Cache {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$message = wp_sprintf( 'Warning! Missing %l, which %s required by WP LCache object cache. <a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.', $this->missing_requirements, count( $this->missing_requirements ) > 1 ? 'are' : 'is' );
-		echo '<div class="message error"><p>' . wp_kses_post( $message ) . '</p></div>';
+		echo '<div class="message error"><p>' . wp_kses_post( $this->get_missing_requirements_error_message() ) . '</p></div>';
+	}
+
+	/**
+	 * Get the missing requirements error message
+	 */
+	private function get_missing_requirements_error_message() {
+		$message = sprintf( 'Warning! Missing %s, which %s required by WP LCache object cache. ', implode( ', ', $this->missing_requirements ), count( $this->missing_requirements ) > 1 ? 'are' : 'is' );
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			$message .= 'See "Installation" for more details: https://wordpress.org/plugins/wp-lcache/installation/';
+		} else {
+			$message .= '<a href="https://wordpress.org/plugins/wp-lcache/installation/" target="_blank">See "Installation" for more details</a>.';
+		}
+		return $message;
 	}
 
 	/**
@@ -1159,8 +1171,12 @@ class WP_Object_Cache {
 			}
 		}
 
-		if ( ! empty( $this->missing_requirements ) && function_exists( 'add_action' ) ) {
-			add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_lcache' ) );
+		if ( ! empty( $this->missing_requirements ) ) {
+			if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( 'WP_CLI' ) ) {
+				WP_CLI::warning( $this->get_missing_requirements_error_message() );
+			} else if ( function_exists( 'add_action' ) ) {
+				add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_lcache' ) );
+			}
 		}
 
 		$this->global_prefix = ( $this->multisite || defined( 'CUSTOM_USER_TABLE' ) && defined( 'CUSTOM_USER_META_TABLE' ) ) ? '' : $table_prefix;
