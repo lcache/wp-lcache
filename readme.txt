@@ -13,9 +13,17 @@ Supercharge your WP Object Cache with LCache, a persistent, performant, and mult
 
 [![Travis CI](https://travis-ci.org/lcache/wp-lcache.svg?branch=master)](https://travis-ci.org/lcache/wp-lcache) [![CircleCI](https://circleci.com/gh/lcache/wp-lcache/tree/master.svg?style=svg)](https://circleci.com/gh/lcache/wp-lcache/tree/master)
 
-For sites concerned with high traffic, speed for logged-in users, or dynamic pageloads, a high-speed and persistent object cache is a must. WP LCache improves upon Memcached and Redis implementations by using APCu, PHP's in-memory cache, in a way that's compatible with multiple web nodes.
+For sites concerned with high traffic, speed for logged-in users, or dynamic pageloads, a high-speed and persistent object cache is a must. WP LCache improves upon Memcached and Redis object cache implementations by using APCu, PHP's in-memory cache, in a way that's compatible with multiple web nodes. Under the hood, WP LCache uses [LCache](https://github.com/lcache/lcache), a library that applies the tiered caching model of multi-core processors (with local L1 and central L2 caches) to web applications.
 
-Under the hood, WP LCache uses [LCache](https://github.com/lcache/lcache), a library that applies the tiered caching model of multi-core processors (with local L1 and central L2 caches) to web applications. In this configuration, APCu is the L1 cache and the database is the L2 cache. APCu traditionally can't be used on multiple web nodes because each web node represents a different cache pool. Because WP LCache has a database-based L2 cache, a cache update or delete on one node can then be applied to all other nodes.
+WP LCache is faster than other object cache implementations because:
+
+* By using APCu, which is in-memory, WP LCache uses the fastest possible persistent object cache backend and avoids costly network connections on every request. When using a Memcached or Redis-based persistent object cache where Memcached or Redis is on a different machine, the millisecond cost of each cache hit can add up to seconds of network transactions on every request.
+* By incorporating a common L2 cache, WP LCache synchronizes cache data between multiple web nodes. Cache updates or deletes on one node are then applied to all other nodes. Without this synchronization behavior, APCu can't be used in server configurations with multiple web nodes because the cache pool is local to the machine.
+
+Still not convinced? WP LCache includes features that no one else has:
+
+* Cache groups are handled natively, meaning you can delete an entire group of keys with `wp_cache_delete_group()`.
+* WordPress' alloptions cache is sharded into distinct keys, mitigating cache pollution on high traffic sites. [Read #31245](https://core.trac.wordpress.org/ticket/31245) for all of the gory details.
 
 Read the installation instructions, then install WP LCache from [WordPress.org](https://wordpress.org/plugins/wp-lcache/) or [Github](https://github.com/lcache/wp-lcache).
 
