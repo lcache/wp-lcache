@@ -3,7 +3,7 @@ Contributors: getpantheon, danielbachhuber, stevector
 Tags: cache, plugin
 Requires at least: 4.3
 Tested up to: 4.6.1
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,11 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
 
 == Changelog ==
+
+= 0.5.0 (November 2nd, 2016) =
+* Splits WordPress' alloptions cache into separate cache keys to mitigate cache pollution caused by race conditions. [See #31245](https://core.trac.wordpress.org/ticket/31245) for further detail.
+* Emits warnings in CLI when LCache isn't properly configured.
+* Incorporates a variety of test suite improvements.
 
 = 0.4.0 (October 5th, 2016) =
 * Switches to stub file approach for enabling object cache drop-in, because symlink changes aren't detected by opcode cache in PHP 5.5+.

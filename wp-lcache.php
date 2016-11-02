@@ -3,7 +3,7 @@
  * Plugin Name: WP LCache
  * Plugin URI: http://github.com/pantheon-systems/wp-lcache/
  * Description: Supercharge your WP Object Cache with LCache, a persistent, performant, and multi-layer cache library.
- * Version: 0.4.0
+ * Version: 0.5.0
  * Author: Pantheon, Daniel Bachhuber
  * Author URI: https://pantheon.io/
  */
