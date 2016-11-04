@@ -35,7 +35,7 @@ Go forth and make awesome! And, once you've built something great, [send us feat
 
 We've done some rudimentary testing with New Relic on Pantheon infrastructure. [The results](https://twitter.com/outlandishjosh/status/775756511611990016) were substantial enough for us to begin using LCache in production. [Watch David Strauss' DrupalCon presentation](https://twitter.com/outlandishjosh/status/781281995213115396) for a more thorough explanation.
 
-If you'd like to do some benchmarking yourself, we'd love to hear about your results. Caching is more of an art than a science, and outcomes can vary.
+If you'd like to do some benchmarking yourself, we'd love to hear about your testing methodology and conclusions. Caching is more of an art than a science, and outcomes can vary. Because cost of network transactions is one of the problems solved by WP LCache, the performance gains will be more impressive if you've historically been using Redis or Memcached on a separate machine.
 
 = Is APCu persistent like Redis is? =
 
