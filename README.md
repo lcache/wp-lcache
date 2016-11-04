@@ -29,6 +29,18 @@ Read the installation instructions, then install WP LCache from [WordPress.org](
 
 Go forth and make awesome! And, once you've built something great, [send us feature requests (or bug reports)](https://github.com/lcache/wp-lcache/issues).
 
+## Frequently Asked Questions ##
+
+### Do you have benchmarks you can share? ###
+
+We've done some rudimentary testing with New Relic on Pantheon infrastructure. [The results](https://twitter.com/outlandishjosh/status/775756511611990016) were substantial enough for us to begin using LCache in production. [Watch David Strauss' DrupalCon presentation](https://twitter.com/outlandishjosh/status/781281995213115396) for a more thorough explanation.
+
+If you'd like to do some benchmarking yourself, we'd love to hear about your testing methodology and conclusions. Caching is more of an art than a science, and outcomes can vary. Because cost of network transactions is one of the problems solved by WP LCache, the performance gains will be more impressive if you've historically been using Redis or Memcached on a separate machine.
+
+### Is APCu persistent like Redis is? ###
+
+APCu is persistent through the life of a PHP-FPM process. However, unlike Redis, APCu doesn't save its state to disk at shutdown. When PHP-FPM is restarted, WP LCache will repopulate the L1 cache (APCu) from the L2 cache (database).
+
 ## Installation ##
 
 **WP LCache requires PHP 5.6 or greater with the APCu extension enabled.**
