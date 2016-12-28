@@ -4,7 +4,7 @@
 set +x
 set -e
 
-terminus auth whoami > /dev/null
+terminus whoami > /dev/null
 if [ $? -ne 0 ]; then
 	echo "Terminus unauthenticated; assuming unauthenticated build"
 	exit 0
