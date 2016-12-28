@@ -13,8 +13,8 @@ set -ex
 ###
 # Create a new environment for this particular test run.
 ###
-terminus site create-env --to-env=$TERMINUS_ENV --from-env=dev
-yes | terminus site wipe
+terminus env:create  $TERMINUS_SITE.dev $TERMINUS_ENV
+terminus env:wipe $SITE_ENV --yes
 
 ###
 # Get all necessary environment details.
@@ -27,7 +27,7 @@ BASH_DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ###
 # Switch to git mode for pushing the files up
 ###
-terminus site set-connection-mode --mode=git
+terminus connection:set $SITE_ENV git
 rm -rf $PREPARE_DIR
 git clone -b $TERMINUS_ENV $PANTHEON_GIT_URL $PREPARE_DIR
 
@@ -63,7 +63,7 @@ git push
 ###
 # Silence output so as not to show the password.
 {
-  terminus wp "core install --title=$TERMINUS_ENV-$TERMINUS_SITE --url=$PANTHEON_SITE_URL --admin_user=$WORDPRESS_ADMIN_USERNAME --admin_email=wp-lcache@getpantheon.com --admin_password=$WORDPRESS_ADMIN_PASSWORD"
+  terminus wp $SITE_ENV -- core install --title=$TERMINUS_ENV-$TERMINUS_SITE --url=$PANTHEON_SITE_URL --admin_user=$WORDPRESS_ADMIN_USERNAME --admin_email=wp-lcache@getpantheon.com --admin_password=$WORDPRESS_ADMIN_PASSWORD
 } &> /dev/null
-terminus wp "cache flush"
-terminus wp "plugin activate wp-lcache"
+terminus wp $SITE_ENV -- cache flush
+terminus wp $SITE_ENV -- plugin activate wp-lcache
