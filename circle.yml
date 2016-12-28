@@ -12,6 +12,8 @@ machine:
     # in this step, it would result in a different password being used in each
     # line of other steps. Each CircleCI command runs in a separate shell.
     WORDPRESS_ADMIN_PASSWORD: $(cat ~/WORDPRESS_ADMIN_PASSWORD)
+    PATH: $PATH:~/terminus/bin
+
 
 dependencies:
   cache_directories:
@@ -38,8 +40,8 @@ dependencies:
         echo "TERMINUS_TOKEN environment variables missing; assuming unauthenticated build"
         exit 0
       fi
-      curl -O https://raw.githubusercontent.com/pantheon-systems/terminus-installer/master/builds/installer.phar && php installer.phar
-      composer install
+      - git clone --branch master https://github.com/pantheon-systems/terminus.git ~/terminus
+      - cd ~/terminus && composer install      composer install
       terminus auth:login --machine-token=$TERMINUS_TOKEN
 
 test:
