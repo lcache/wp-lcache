@@ -14,7 +14,6 @@ machine:
     WORDPRESS_ADMIN_PASSWORD: $(cat ~/WORDPRESS_ADMIN_PASSWORD)
     PATH: $PATH:~/terminus/bin
 
-
 dependencies:
   cache_directories:
     - ~/.composer/cache
