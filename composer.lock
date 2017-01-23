@@ -690,12 +690,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests.git",
-                "reference": "c257bab30afb82f8586ac20e3de030003809c196"
+                "reference": "b2f680bcf693a7d7f6ad440d2d58954229a8f942"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pantheon-systems/pantheon-wordpress-upstream-tests/zipball/c257bab30afb82f8586ac20e3de030003809c196",
-                "reference": "c257bab30afb82f8586ac20e3de030003809c196",
+                "url": "https://api.github.com/repos/pantheon-systems/pantheon-wordpress-upstream-tests/zipball/b2f680bcf693a7d7f6ad440d2d58954229a8f942",
+                "reference": "b2f680bcf693a7d7f6ad440d2d58954229a8f942",
                 "shasum": ""
             },
             "require": {
@@ -719,7 +719,7 @@
                 "source": "https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests/tree/master",
                 "issues": "https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests/issues"
             },
-            "time": "2016-11-02 18:16:26"
+            "time": "2016-12-12 23:52:51"
         },
         {
             "name": "psr/http-message",
