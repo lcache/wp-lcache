@@ -11,4 +11,4 @@ set -ex
 ###
 # Delete the environment used for this test run.
 ###
-yes | terminus site delete-env --remove-branch
+terminus multidev:delete $SITE_ENV --delete-branch --yes
