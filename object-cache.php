@@ -498,7 +498,7 @@ class WP_Object_Cache {
 		$multisite_safe_group = $this->multisite_safe_group( $group );
 		if ( $this->should_persist( $group ) ) {
 			$this->call_lcache( 'delete', array( null, $group ) );
-		} else if ( ! $this->should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
+		} elseif ( ! $this->should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
 			return false;
 		}
 		unset( $this->cache[ $multisite_safe_group ] );
@@ -984,7 +984,7 @@ class WP_Object_Cache {
 					$retval = $this->lcache->get( $address );
 					if ( 'incr' === $method ) {
 						$retval += $arguments[1];
-					} else if ( 'decr' === $method ) {
+					} elseif ( 'decr' === $method ) {
 						$retval -= $arguments[1];
 					}
 					if ( $retval < 0 ) {
@@ -1118,7 +1118,7 @@ class WP_Object_Cache {
 		// @codingStandardsIgnoreStart
 		if ( ! function_exists( 'apcu_sma_info' ) ) {
 			$missing['apcu-installed'] = 'APCu extension installed';
-		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+		} elseif ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
 			$missing['apcu-enabled'] = 'APCu extension enabled';
 		}
 		// @codingStandardsIgnoreEnd
@@ -1172,7 +1172,7 @@ class WP_Object_Cache {
 			if ( $errors = $l2->getErrors() ) {
 				$this->missing_requirements['database-error'] = 'LCache database table';
 				$this->lcache = null;
-			} else if ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
+			} elseif ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
 				add_action( 'init', array( $this, 'wp_action_init_register_cron' ) );
 				add_action( 'wp_lcache_collect_garbage', array( $this, 'wp_action_wp_lcache_collect_garbage' ) );
 			}
@@ -1181,7 +1181,7 @@ class WP_Object_Cache {
 		if ( ! empty( $this->missing_requirements ) ) {
 			if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( 'WP_CLI' ) ) {
 				WP_CLI::warning( $this->get_missing_requirements_error_message() );
-			} else if ( function_exists( 'add_action' ) ) {
+			} elseif ( function_exists( 'add_action' ) ) {
 				add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_lcache' ) );
 			}
 		}
