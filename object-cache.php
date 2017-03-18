@@ -1155,11 +1155,11 @@ class WP_Object_Cache {
 			}
 
 			if ( $socket ) {
-				$dsn = sprintf( 'mysql:unix_socket=%s;dbname=%s', DB_HOST, DB_NAME );
+				$dsn = sprintf( 'mysql:unix_socket=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET );
 			} elseif ( $port ) {
-				$dsn = sprintf( 'mysql:host=%s;port=%d;dbname=%s', $host, $port, DB_NAME );
+				$dsn = sprintf( 'mysql:host=%s;port=%d;dbname=%s;charset=%s', $host, $port, DB_NAME, DB_CHARSET );
 			} else {
-				$dsn = sprintf( 'mysql:host=%s;dbname=%s', DB_HOST, DB_NAME );
+				$dsn = sprintf( 'mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET );
 			}
 
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
