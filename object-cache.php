@@ -1052,7 +1052,7 @@ class WP_Object_Cache {
 				$socket = $port_or_socket;
 			}
 		}
-		return array( $port, $socket );
+		return array( $port, $socket, $host );
 	}
 
 	/**
@@ -1148,13 +1148,13 @@ class WP_Object_Cache {
 				$l1 = new APCuL1();
 			}
 
-			list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
+			list( $port, $socket, $host ) = self::get_port_socket_from_host( DB_HOST );
 
 			if ( defined( 'WP_LCACHE_RUNNING_TESTS' ) && WP_LCACHE_RUNNING_TESTS ) {
 				wp_lcache_initialize_database_schema();
 			}
 
-			$dsn = 'mysql:host='. DB_HOST. ';port='. $port .';dbname='. DB_NAME;
+			$dsn = sprintf( 'mysql:host=%s;port=%d;dbname=%s', $host, $port, DB_NAME );
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
