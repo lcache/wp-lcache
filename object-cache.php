@@ -1154,7 +1154,12 @@ class WP_Object_Cache {
 				wp_lcache_initialize_database_schema();
 			}
 
-			$dsn = sprintf( 'mysql:host=%s;port=%d;dbname=%s', $host, $port, DB_NAME );
+			if ( $socket ) {
+				$dsn = sprintf( 'mysql:unix_socket=%s;dbname=%s', DB_HOST, DB_NAME );
+			} else {
+				$dsn = sprintf( 'mysql:host=%s;port=%d;dbname=%s', $host, $port, DB_NAME );
+			}
+
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
