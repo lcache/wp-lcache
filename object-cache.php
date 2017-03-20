@@ -12,8 +12,8 @@ use \LCache\NullL1;
 if ( ! defined( 'WP_LCACHE_AUTOLOADER' ) ) {
 	define( 'WP_LCACHE_AUTOLOADER', dirname( realpath( __FILE__ ) ) . '/vendor/autoload.php' );
 }
-if ( version_compare( PHP_VERSION, '5.6' ) >= 0 ) {
-	include_once( WP_LCACHE_AUTOLOADER );
+if ( file_exists( WP_LCACHE_AUTOLOADER ) && version_compare( PHP_VERSION, '5.6' ) >= 0 ) {
+	require_once( WP_LCACHE_AUTOLOADER );
 }
 
 # Users with setups where multiple installs share a common wp-config.php or $table_prefix
