@@ -21,7 +21,7 @@ $_SERVER['SERVER_PORT'] = 80;
 require dirname( dirname( dirname( __FILE__ ) ) ) . '/wp-lcache.php';
 
 // Easiest way to get this to where WordPress will load it
-define( 'WP_LCACHE_AUTOLOADER', dirname( dirname( dirname( __FILE__ ) ) ) . '/vendor/autoload.php' );
+define( 'WP_LCACHE_AUTOLOADER', dirname( dirname( __DIR__ ) ) . '/vendor/autoload.php' );
 copy( dirname( dirname( dirname( __FILE__ ) ) ) . '/object-cache.php', $_core_dir . '/wp-content/object-cache.php' );
 
 require $_tests_dir . '/includes/bootstrap.php';
