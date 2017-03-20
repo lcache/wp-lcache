@@ -17,6 +17,14 @@ matrix:
       env: WP_VERSION=latest PHP_APCU=enabled
     - php: 7.0.15
       env: WP_VERSION=latest PHP_APCU=enabled
+    - php: 5.6
+      env: WP_VERSION=latest PHP_APCU=enabled
+    - php: 5.6
+      env: WP_VERSION=latest PHP_APCU=disabled
+    - php: 5.6
+      env: WP_VERSION=nightly PHP_APCU=enabled
+    - php: 5.6
+      env: WP_TRAVISCI=phpcs
 
 before_script:
     - |
