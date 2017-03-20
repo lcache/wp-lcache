@@ -13,9 +13,11 @@ branches:
 
 matrix:
   include:
-    - php: 5.6
+    - php: 7.1
       env: WP_VERSION=latest PHP_APCU=enabled
     - php: 7.0
+      env: WP_VERSION=latest PHP_APCU=enabled
+    - php: 5.6
       env: WP_VERSION=latest PHP_APCU=enabled
     - php: 5.6
       env: WP_VERSION=latest PHP_APCU=disabled
@@ -29,7 +31,7 @@ before_script:
       if [[ ! -z "$WP_VERSION" ]] ; then
         bash bin/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
         if [[ "$PHP_APCU" == "enabled" ]] ; then
-          if [[ ${TRAVIS_PHP_VERSION:0:3} == "7.0" ]]; then
+          if [[ ${TRAVIS_PHP_VERSION:0:2} == "7." ]]; then
             echo "no" | pecl install apcu
           else
             echo "no\nno" | pecl install channel://pecl.php.net/apcu-4.0.11
@@ -38,7 +40,7 @@ before_script:
         fi
       fi
     - |
-      if [[ ${TRAVIS_PHP_VERSION:0:3} == "7.0" ]]; then
+      if [[ ${TRAVIS_PHP_VERSION:0:2} == "7." ]]; then
         composer global require "phpunit/phpunit=5.6.*"
       else
         composer global require "phpunit/phpunit=4.8.*"
