@@ -44,6 +44,26 @@ class CacheTest extends WP_UnitTestCase {
 		return $cache;
 	}
 
+	public function test_pdo_dsn() {
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=127.0.0.1;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( '127.0.0.1', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=db.www.example.com;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'db.www.example.com', 'wordpress_test', 'utf8' ) );
+		// Invalid port numbers
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:foo', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:0', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:77777', 'wordpress_test', 'utf8' ) );
+	}
+
+	public function test_pdo_dsn_with_port() {
+		$this->assertEquals( 'mysql:host=localhost;port=3306;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:3306', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=127.0.0.1;port=3306;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( '127.0.0.1:3306', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=db.www.example.com;port=3306;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'db.www.example.com:3306', 'wordpress_test', 'utf8' ) );
+	}
+
+	public function test_pdo_dsn_with_socket() {
+		$this->assertEquals( 'mysql:unix_socket=/var/lib/mysql/mysql.sock;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( '/var/lib/mysql/mysql.sock', 'wordpress_test', 'utf8' ) );
+	}
+
 	public function test_loaded() {
 		$this->assertTrue( WP_LCACHE_OBJECT_CACHE );
 	}
@@ -873,8 +893,7 @@ class CacheTest extends WP_UnitTestCase {
 		$l1 = new \LCache\NullL1( $second_pool );
 
 		// L2 isn't available as a public resource, so we need to recreate
-		list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
-		$dsn = 'mysql:host='. DB_HOST. ';port='. $port .';dbname='. DB_NAME;
+		$dsn = WP_Object_Cache::get_pdo_dsn( DB_HOST, DB_NAME, DB_CHARSET );
 		$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES"' );
 		$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 		$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
@@ -1043,32 +1062,6 @@ class CacheTest extends WP_UnitTestCase {
 			return $query;
 		}
 		return parent::_drop_temporary_tables( $query );
-	}
-
-	/**
-	 * Get the port or the socket from the host.
-	 *
-	 * @param string $host
-	 * @return array
-	 */
-	private static function get_port_socket_from_host( $host ) {
-		$port = null;
-		$socket = null;
-		$port_or_socket = strstr( $host, ':' );
-		if ( ! empty( $port_or_socket ) ) {
-			$host = substr( $host, 0, strpos( $host, ':' ) );
-			$port_or_socket = substr( $port_or_socket, 1 );
-			if ( 0 !== strpos( $port_or_socket, '/' ) ) {
-				$port = intval( $port_or_socket );
-				$maybe_socket = strstr( $port_or_socket, ':' );
-				if ( ! empty( $maybe_socket ) ) {
-					$socket = substr( $maybe_socket, 1 );
-				}
-			} else {
-				$socket = $port_or_socket;
-			}
-		}
-		return array( $port, $socket );
 	}
 
 	/**
