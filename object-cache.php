@@ -498,7 +498,7 @@ class WP_Object_Cache {
 		$multisite_safe_group = $this->multisite_safe_group( $group );
 		if ( $this->should_persist( $group ) ) {
 			$this->call_lcache( 'delete', array( null, $group ) );
-		} else if ( ! $this->should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
+		} elseif ( ! $this->should_persist( $group ) && ! isset( $this->cache[ $multisite_safe_group ] ) ) {
 			return false;
 		}
 		unset( $this->cache[ $multisite_safe_group ] );
@@ -984,7 +984,7 @@ class WP_Object_Cache {
 					$retval = $this->lcache->get( $address );
 					if ( 'incr' === $method ) {
 						$retval += $arguments[1];
-					} else if ( 'decr' === $method ) {
+					} elseif ( 'decr' === $method ) {
 						$retval -= $arguments[1];
 					}
 					if ( $retval < 0 ) {
@@ -1030,29 +1030,30 @@ class WP_Object_Cache {
 	}
 
 	/**
-	 * Get the port or the socket from the host.
+	 * Return a DSN string for connecting to MySQL
 	 *
 	 * @param string $host
-	 * @return array
+	 * @param string $name
+	 * @param string $charset
+	 * @return string
 	 */
-	private static function get_port_socket_from_host( $host ) {
-		$port = null;
-		$socket = null;
-		$port_or_socket = strstr( $host, ':' );
-		if ( ! empty( $port_or_socket ) ) {
-			$host = substr( $host, 0, strpos( $host, ':' ) );
-			$port_or_socket = substr( $port_or_socket, 1 );
-			if ( 0 !== strpos( $port_or_socket, '/' ) ) {
-				$port = intval( $port_or_socket );
-				$maybe_socket = strstr( $port_or_socket, ':' );
-				if ( ! empty( $maybe_socket ) ) {
-					$socket = substr( $maybe_socket, 1 );
-				}
-			} else {
-				$socket = $port_or_socket;
+	public static function get_pdo_dsn( $host, $name, $charset ) {
+		if ( '.sock' === substr( $host, -5 ) ) {
+			return sprintf( 'mysql:unix_socket=%s;dbname=%s;charset=%s', $host, $name, $charset );
+		}
+
+		$port = strstr( $host, ':' );
+
+		if ( false !== $port ) {
+			$host = strstr( $host, ':', true );
+			$port = (int) ltrim( $port, ':' );
+
+			if ( $port > 0 && $port < 65536 ) {
+				return sprintf( 'mysql:host=%s;port=%d;dbname=%s;charset=%s', $host, $port, $name, $charset );
 			}
 		}
-		return array( $port, $socket );
+
+		return sprintf( 'mysql:host=%s;dbname=%s;charset=%s', $host, $name, $charset );
 	}
 
 	/**
@@ -1118,14 +1119,13 @@ class WP_Object_Cache {
 		// @codingStandardsIgnoreStart
 		if ( ! function_exists( 'apcu_sma_info' ) ) {
 			$missing['apcu-installed'] = 'APCu extension installed';
-		} else if ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+		} elseif ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
 			$missing['apcu-enabled'] = 'APCu extension enabled';
 		}
 		// @codingStandardsIgnoreEnd
 		if ( -1 === version_compare( PHP_VERSION, '5.6' ) ) {
 			$missing['php'] = 'PHP 5.6 or greater';
 		}
-
 		return $missing;
 	}
 
@@ -1148,13 +1148,11 @@ class WP_Object_Cache {
 				$l1 = new APCuL1();
 			}
 
-			list( $port, $socket ) = self::get_port_socket_from_host( DB_HOST );
-
 			if ( defined( 'WP_LCACHE_RUNNING_TESTS' ) && WP_LCACHE_RUNNING_TESTS ) {
 				wp_lcache_initialize_database_schema();
 			}
 
-			$dsn = 'mysql:host='. DB_HOST. ';port='. $port .';dbname='. DB_NAME;
+			$dsn = self::get_pdo_dsn( DB_HOST, DB_NAME, DB_CHARSET );
 			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
 			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
@@ -1165,7 +1163,7 @@ class WP_Object_Cache {
 			if ( $errors = $l2->getErrors() ) {
 				$this->missing_requirements['database-error'] = 'LCache database table';
 				$this->lcache = null;
-			} else if ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
+			} elseif ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
 				add_action( 'init', array( $this, 'wp_action_init_register_cron' ) );
 				add_action( 'wp_lcache_collect_garbage', array( $this, 'wp_action_wp_lcache_collect_garbage' ) );
 			}
@@ -1174,7 +1172,7 @@ class WP_Object_Cache {
 		if ( ! empty( $this->missing_requirements ) ) {
 			if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( 'WP_CLI' ) ) {
 				WP_CLI::warning( $this->get_missing_requirements_error_message() );
-			} else if ( function_exists( 'add_action' ) ) {
+			} elseif ( function_exists( 'add_action' ) ) {
 				add_action( 'admin_notices', array( $this, 'wp_action_admin_notices_warn_missing_lcache' ) );
 			}
 		}
