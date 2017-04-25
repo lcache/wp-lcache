@@ -2,8 +2,8 @@
 Contributors: getpantheon, danielbachhuber, stevector
 Tags: cache, plugin
 Requires at least: 4.3
-Tested up to: 4.7
-Stable tag: 0.5.0
+Tested up to: 4.7.4
+Stable tag: 0.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -111,6 +111,11 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
 
 == Changelog ==
+
+= 0.5.1 (April 25th, 2017) =
+* Uses the correct DSN format in all DB_HOST scenarios.
+* Only loads LCache library for PHP 5.6+, to ensure WordPress doesn't fatal on older versions.
+* Test improvements.
 
 = 0.5.0 (November 2nd, 2016) =
 * Splits WordPress' alloptions cache into separate cache keys to mitigate cache pollution caused by race conditions. [See #31245](https://core.trac.wordpress.org/ticket/31245) for further detail.
