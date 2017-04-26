@@ -976,7 +976,8 @@ class WP_Object_Cache {
 			} else {
 				$safe_group = null;
 			}
-			$address = new Address( $safe_group, $arguments[0][0] );
+			$key = self::normalize_address_key( $safe_group, $arguments[0][0] );
+			$address = new Address( $safe_group, $key );
 			// Some LCache methods don't exist directly, so we need to mock them
 			switch ( $method ) {
 				case 'incr':
@@ -1027,6 +1028,35 @@ class WP_Object_Cache {
 				return null;
 		}
 
+	}
+
+	/**
+	 * Normalizes an address key to comply with the DB column length
+	 *
+	 * @param string $group
+	 * @param string $key
+	 * @return string
+	 */
+	public static function normalize_address_key( $group, $key ) {
+		$is_ascii = mb_check_encoding( $key, 'ASCII' );
+
+		// 251 represents the max length of the address column (VARCHAR 255),
+		// minus the group length, minus a buffer of 4 chars that will be added
+		// to the column in `Address::serialize()` - xx:{group}:{key}
+		$key_max_length = 251 - strlen( $group );
+
+		if ( $is_ascii && strlen( $key ) <= $key_max_length ) {
+			return $key;
+		}
+
+		$hash = hash( 'sha256', $key ); // 64 chars
+
+		if ( ! $is_ascii ) {
+			return $hash;
+		}
+
+		// Return with as much of the original key as possible then append the hash
+		return substr( $key, 0, $key_max_length - strlen( $hash ) ) . $hash;
 	}
 
 	/**

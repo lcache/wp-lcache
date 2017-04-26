@@ -64,6 +64,50 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 'mysql:unix_socket=/var/lib/mysql/mysql.sock;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( '/var/lib/mysql/mysql.sock', 'wordpress_test', 'utf8' ) );
 	}
 
+	public function test_normalize_address_key() {
+		$group = 'lcache_alloptions_values';
+
+		// Non-ASCII long
+		$non_ascii_long = str_repeat( '愛€£¢¡', 100 );
+		$non_ascii_long_key = WP_Object_Cache::normalize_address_key( $group, $non_ascii_long );
+		$non_ascii_long_address = new \LCache\Address( $group, $non_ascii_long_key );
+		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $non_ascii_long_address->serialize() );
+		$this->assertRegexp( '/' . hash( 'sha256', $non_ascii_long ) . '$/', $non_ascii_long_address->serialize() );
+
+		// Non-ASCII short
+		$non_ascii_short = '愛€£¢¡';
+		$non_ascii_short_key = WP_Object_Cache::normalize_address_key( $group, $non_ascii_short );
+		$non_ascii_short_address = new \LCache\Address( $group, $non_ascii_short_key );
+		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $non_ascii_short_address->serialize() );
+		$this->assertRegexp( '/' . hash( 'sha256', $non_ascii_short ) . '$/', $non_ascii_short_address->serialize() );
+
+		// ASCII long
+		$ascii_long = str_repeat( 'abcde', 100 );
+		$ascii_long_key = WP_Object_Cache::normalize_address_key( $group, $ascii_long );
+		$ascii_long_address = new \LCache\Address( $group, $ascii_long_key );
+		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $ascii_long_address->serialize() );
+		$this->assertRegexp( '/' . hash( 'sha256', $ascii_long ) . '$/', $ascii_long_address->serialize() );
+
+		// ASCII short
+		$ascii_short = 'abcde';
+		$ascii_short_key = WP_Object_Cache::normalize_address_key( $group, $ascii_short );
+		$ascii_short_address = new \LCache\Address( $group, $ascii_short_key );
+		$this->assertRegexp( '/^24:lcache_alloptions_values:abcde$/', $ascii_short_address->serialize() );
+
+		// ASCII at max (251 - 24 = 227)
+		$ascii_max = str_repeat( 'a', 227 );
+		$ascii_max_key = WP_Object_Cache::normalize_address_key( $group, $ascii_max );
+		$ascii_max_address = new \LCache\Address( $group, $ascii_max_key );
+		$this->assertRegexp( '/^24:lcache_alloptions_values:' . $ascii_max . '$/', $ascii_max_address->serialize() );
+
+		// ASCII one over the max
+		$ascii_over_max = str_repeat( 'a', 228 );
+		$ascii_over_max_key = WP_Object_Cache::normalize_address_key( $group, $ascii_over_max );
+		$ascii_over_max_address = new \LCache\Address( $group, $ascii_over_max_key );
+		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $ascii_over_max_address->serialize() );
+		$this->assertRegexp( '/' . hash( 'sha256', $ascii_over_max ) . '$/', $ascii_over_max_address->serialize() );
+	}
+
 	public function test_loaded() {
 		$this->assertTrue( WP_LCACHE_OBJECT_CACHE );
 	}
