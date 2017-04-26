@@ -1041,8 +1041,8 @@ class WP_Object_Cache {
 		$is_ascii = mb_check_encoding( $key, 'ASCII' );
 
 		// 251 represents the max length of the address column (VARCHAR 255),
-		// minus the group length, minus a buffer of 4 chars that will be added
-		// to the column in `Address::serialize()` - xx:{group}:{key}
+		// minus a buffer of 4 chars that are added by `Address::serialize()`
+		// xx:{group}:{key}
 		$key_max_length = 251 - strlen( $group );
 
 		if ( $is_ascii && strlen( $key ) <= $key_max_length ) {
