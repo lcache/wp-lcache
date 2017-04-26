@@ -73,6 +73,7 @@ class CacheTest extends WP_UnitTestCase {
 		$non_ascii_long_address = new \LCache\Address( $group, $non_ascii_long_key );
 		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $non_ascii_long_address->serialize() );
 		$this->assertRegexp( '/' . hash( 'sha256', $non_ascii_long ) . '$/', $non_ascii_long_address->serialize() );
+		$this->assertEquals( 92, strlen( $non_ascii_long_address->serialize() ) ); // 4 + 24 + 64 = 92
 
 		// Non-ASCII short
 		$non_ascii_short = '愛€£¢¡';
@@ -80,6 +81,7 @@ class CacheTest extends WP_UnitTestCase {
 		$non_ascii_short_address = new \LCache\Address( $group, $non_ascii_short_key );
 		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $non_ascii_short_address->serialize() );
 		$this->assertRegexp( '/' . hash( 'sha256', $non_ascii_short ) . '$/', $non_ascii_short_address->serialize() );
+		$this->assertEquals( 92, strlen( $non_ascii_short_address->serialize() ) ); // 4 + 24 + 64 = 92
 
 		// ASCII long
 		$ascii_long = str_repeat( 'abcde', 100 );
@@ -87,6 +89,7 @@ class CacheTest extends WP_UnitTestCase {
 		$ascii_long_address = new \LCache\Address( $group, $ascii_long_key );
 		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $ascii_long_address->serialize() );
 		$this->assertRegexp( '/' . hash( 'sha256', $ascii_long ) . '$/', $ascii_long_address->serialize() );
+		$this->assertEquals( 255, strlen( $ascii_long_address->serialize() ) );
 
 		// ASCII short
 		$ascii_short = 'abcde';
@@ -99,6 +102,7 @@ class CacheTest extends WP_UnitTestCase {
 		$ascii_max_key = WP_Object_Cache::normalize_address_key( $group, $ascii_max );
 		$ascii_max_address = new \LCache\Address( $group, $ascii_max_key );
 		$this->assertRegexp( '/^24:lcache_alloptions_values:' . $ascii_max . '$/', $ascii_max_address->serialize() );
+		$this->assertEquals( 255, strlen( $ascii_max_address->serialize() ) );
 
 		// ASCII one over the max
 		$ascii_over_max = str_repeat( 'a', 228 );
@@ -106,6 +110,7 @@ class CacheTest extends WP_UnitTestCase {
 		$ascii_over_max_address = new \LCache\Address( $group, $ascii_over_max_key );
 		$this->assertRegexp( '/^24:lcache_alloptions_values:/', $ascii_over_max_address->serialize() );
 		$this->assertRegexp( '/' . hash( 'sha256', $ascii_over_max ) . '$/', $ascii_over_max_address->serialize() );
+		$this->assertEquals( 255, strlen( $ascii_over_max_address->serialize() ) );
 	}
 
 	public function test_loaded() {
