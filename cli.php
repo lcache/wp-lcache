@@ -4,6 +4,7 @@ class WP_LCache_CLI {
 
 	/**
 	 * Enable WP LCache by creating a stub for object-cache.php
+	 * and/or creating the required database tables.
 	 */
 	public function enable() {
 		wp_lcache_initialize_database_schema();
