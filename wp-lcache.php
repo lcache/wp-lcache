@@ -73,6 +73,8 @@ if ( function_exists( 'add_action' ) ) {
  * Run required database migrations (in ascending order) upon version change
  */
 function wp_lcache_run_database_migrations() {
+	wp_cache_delete( 'wp_lcache_version', 'options' );
+
 	$plugin      = get_plugin_data( __FILE__, false, false );
 	$old_version = get_option( 'wp_lcache_version', '0.5.1' ); // Last version before migrations were introduced
 	$new_version = ! empty( $plugin['Version'] ) ? $plugin['Version'] : false;
