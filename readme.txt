@@ -4,8 +4,8 @@ Tags: apc, apcu, cache, caching, lcache, object-cache, performance
 Requires at least: 4.3
 Tested up to: 4.7.4
 Stable tag: 0.5.1
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+License: GPL-2.0
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Supercharge your WP Object Cache with LCache, a persistent, performant, and multi-layer cache library.
 
