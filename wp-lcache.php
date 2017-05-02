@@ -104,11 +104,15 @@ function wp_lcache_database_migration_0_6_0() {
 
 	// First introduced in v0.2.2 but a migration was never provided
 	$events_table = $GLOBALS['table_prefix'] . 'lcache_events';
+	// @codingStandardsIgnoreStart
 	$wpdb->query( "ALTER TABLE `{$events_table}` MODIFY COLUMN `value` LONGBLOB;" );
+	// @codingStandardsIgnoreEND
 
 	// Remove a currently unused `tags` table
 	$tags_table = $GLOBALS['table_prefix'] . 'lcache_tags';
+	// @codingStandardsIgnoreStart
 	$wpdb->query( "DROP TABLE IF EXISTS `{$tags_table}`;" );
+	// @codingStandardsIgnoreEnd
 }
 
 /**
