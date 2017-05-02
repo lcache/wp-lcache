@@ -8,6 +8,7 @@ class WP_LCache_CLI {
 	 */
 	public function enable() {
 		wp_lcache_initialize_database_schema();
+		wp_lcache_run_database_migrations();
 		if ( defined( 'WP_LCACHE_OBJECT_CACHE' ) && WP_LCACHE_OBJECT_CACHE ) {
 			WP_CLI::success( 'WP LCache is already enabled.' );
 			return;
