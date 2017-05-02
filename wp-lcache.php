@@ -47,12 +47,11 @@ function wp_lcache_initialize_database_schema() {
 		KEY `lookup_miss` (`address`,`event_id`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 	// @codingStandardsIgnoreEnd
-
-	wp_lcache_run_database_migrations();
 }
 
 if ( function_exists( 'register_activation_hook' ) ) {
 	register_activation_hook( __FILE__, 'wp_lcache_initialize_database_schema' );
+	register_activation_hook( __FILE__, 'wp_lcache_run_database_migrations' );
 }
 
 /**
@@ -66,10 +65,12 @@ function wp_lcache_upgrader_process_complete( $upgrader, $hook_extra ) {
 		wp_lcache_run_database_migrations();
 	}
 }
-add_action( 'upgrader_process_complete', 'wp_lcache_upgrader_process_complete', 10, 2 );
+if ( function_exists( 'add_action' ) ) {
+	add_action( 'upgrader_process_complete', 'wp_lcache_upgrader_process_complete', 10, 2 );
+}
 
 /**
- * Run any required database migrations on version change
+ * Run required database migrations (in ascending order) upon version change
  */
 function wp_lcache_run_database_migrations() {
 	$plugin      = get_plugin_data( __FILE__, false, false );
