@@ -88,7 +88,7 @@ function wp_lcache_run_database_migrations() {
 	);
 
 	foreach ( $migrations as $version => $callback ) {
-		if ( $old_version < $version && function_exists( $callback ) ) {
+		if ( version_compare( $old_version, $version, '<' ) && function_exists( $callback ) ) {
 			$callback();
 		}
 	}
