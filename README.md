@@ -105,11 +105,6 @@ PHPUnit requires the [WordPress PHPUnit test suite](https://make.wordpress.org/c
 
 Behat requires a Pantheon site. Once you've created the site, you'll need [install Terminus](https://github.com/pantheon-systems/terminus#installation), and set the `TERMINUS_TOKEN`, `TERMINUS_SITE`, and `TERMINUS_ENV` environment variables. Then, you can run `./bin/behat-prepare.sh` to prepare the site for the test suite.
 
-## Upgrade Notice ##
-
-### 0.2.2 ###
-Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
-
 ## Changelog ##
 
 ### 0.5.1 (April 25th, 2017) ###
