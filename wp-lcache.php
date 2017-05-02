@@ -46,19 +46,61 @@ function wp_lcache_initialize_database_schema() {
 		KEY `expiration` (`expiration`),
 		KEY `lookup_miss` (`address`,`event_id`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
-
-	$tags_table = $GLOBALS['table_prefix'] . 'lcache_tags';
-	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$tags_table}` (
-		`tag` varchar(255) NOT NULL DEFAULT '',
-		`address` varchar(255) NOT NULL DEFAULT '',
-		PRIMARY KEY (`tag`,`address`),
-		KEY `rewritten_entry` (`address`)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 	// @codingStandardsIgnoreEnd
+
+	wp_lcache_run_database_migrations();
 }
 
 if ( function_exists( 'register_activation_hook' ) ) {
 	register_activation_hook( __FILE__, 'wp_lcache_initialize_database_schema' );
+}
+
+/**
+ * Trigger database migrations after the plugin updates
+ *
+ * @param WP_Upgrader $upgrader
+ * @param array       $hook_extra
+ */
+function wp_lcache_upgrader_process_complete( $upgrader, $hook_extra ) {
+	if ( 'plugin' === $hook_extra['type'] && in_array( plugin_basename( __FILE__ ), $hook_extra['plugins'], true ) ) {
+		wp_lcache_run_database_migrations();
+	}
+}
+add_action( 'upgrader_process_complete', 'wp_lcache_upgrader_process_complete', 10, 2 );
+
+/**
+ * Run any required database migrations on version change
+ */
+function wp_lcache_run_database_migrations() {
+	$plugin      = get_plugin_data( __FILE__, false, false );
+	$old_version = get_option( 'wp_lcache_version', '0.5.1' ); // Last version before migrations were introduced
+	$new_version = ! empty( $plugin['Version'] ) ? $plugin['Version'] : false;
+
+	if ( ! $new_version || $old_version === $new_version ) {
+		return;
+	}
+
+	$migrations = array(
+		'0.6.0' => 'wp_lcache_database_migration_0_6_0',
+	);
+
+	foreach ( $migrations as $version => $callback ) {
+		if ( $old_version < $version && function_exists( $callback ) ) {
+			$callback();
+		}
+	}
+
+	update_option( 'wp_lcache_version', $new_version );
+}
+
+/**
+ * Database migration for v0.6.0
+ */
+function wp_lcache_database_migration_0_6_0() {
+	global $wpdb;
+
+	$tags_table = $GLOBALS['table_prefix'] . 'lcache_tags';
+	$wpdb->query( "DROP TABLE IF EXISTS `{$tags_table}`;" );
 }
 
 /**
