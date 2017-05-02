@@ -1,6 +1,6 @@
 # WP LCache #
-**Contributors:** getpantheon, danielbachhuber, stevector  
-**Tags:** cache, plugin  
+**Contributors:** [getpantheon](https://profiles.wordpress.org/getpantheon), [danielbachhuber](https://profiles.wordpress.org/danielbachhuber), [stevector](https://profiles.wordpress.org/stevector)  
+**Tags:** [apc](https://wordpress.org/plugins/tags/apc/), [apcu](https://wordpress.org/plugins/tags/apcu/), [cache](https://wordpress.org/plugins/tags/cache/), [caching](https://wordpress.org/plugins/tags/caching/), [lcache](https://wordpress.org/plugins/tags/lcache/), [object-cache](https://wordpress.org/plugins/tags/object-cache/), [performance](https://wordpress.org/plugins/tags/performance/)  
 **Requires at least:** 4.3  
 **Tested up to:** 4.7.4  
 **Stable tag:** 0.5.1  
@@ -9,9 +9,9 @@
 
 Supercharge your WP Object Cache with LCache, a persistent, performant, and multi-layer cache library.
 
-## Description ##
+[![Travis CI](https://travis-ci.org/lcache/wp-lcache.svg?branch=master)](https://travis-ci.org/lcache/wp-lcache) [![CircleCI](https://circleci.com/gh/lcache/wp-lcache/tree/master.svg?style=shield)](https://circleci.com/gh/lcache/wp-lcache/tree/master/) [![devDependencies Status](https://david-dm.org/lcache/wp-lcache/master/dev-status.svg)](https://david-dm.org/lcache/wp-lcache/master?type=dev) [![License](https://img.shields.io/badge/license-GPL--2.0-brightgreen.svg)](https://github.com/lcache/wp-lcache/blob/master/license.txt) [![PHP >= 5.6](https://img.shields.io/badge/php-%3E=%205.6-8892bf.svg)](https://secure.php.net/supported-versions.php) [![WordPress >= 4.3](https://img.shields.io/badge/wordpress-%3E=%204.3-blue.svg)](https://wordpress.org/download/release-archive/)  
 
-[![Travis CI](https://travis-ci.org/lcache/wp-lcache.svg?branch=master)](https://travis-ci.org/lcache/wp-lcache) [![CircleCI](https://circleci.com/gh/lcache/wp-lcache/tree/master.svg?style=svg)](https://circleci.com/gh/lcache/wp-lcache/tree/master)
+## Description ##
 
 For sites concerned with high traffic, speed for logged-in users, or dynamic pageloads, a high-speed and persistent object cache is a must. WP LCache improves upon Memcached and Redis object cache implementations by using APCu, PHP's in-memory cache, in a way that's compatible with multiple web nodes. Under the hood, WP LCache uses [LCache](https://github.com/lcache/lcache), a library that applies the tiered caching model of multi-core processors (with local L1 and central L2 caches) to web applications.
 
