@@ -93,7 +93,7 @@ function wp_lcache_run_database_migrations() {
 		}
 	}
 
-	update_option( 'wp_lcache_version', $new_version );
+	update_option( 'wp_lcache_version', $new_version, false );
 }
 
 /**
