@@ -1119,7 +1119,7 @@ class WP_Object_Cache {
 		// @codingStandardsIgnoreStart
 		if ( ! function_exists( 'apcu_sma_info' ) ) {
 			$missing['apcu-installed'] = 'APCu extension installed';
-		} elseif ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+		} elseif ( php_sapi_name() !== 'cli' && function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
 			$missing['apcu-enabled'] = 'APCu extension enabled';
 		}
 		// @codingStandardsIgnoreEnd
