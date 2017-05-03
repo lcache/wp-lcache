@@ -1115,14 +1115,17 @@ class WP_Object_Cache {
 		if ( ! class_exists( '\LCache\NullL1' ) ) {
 			$missing['lcache'] = 'LCache library';
 		}
-		// apcu_sma_info() triggers a warning when APCu is disabled
-		// @codingStandardsIgnoreStart
-		if ( ! function_exists( 'apcu_sma_info' ) ) {
-			$missing['apcu-installed'] = 'APCu extension installed';
-		} elseif ( php_sapi_name() !== 'cli' && function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
-			$missing['apcu-enabled'] = 'APCu extension enabled';
+
+		if ( 'cli' !== php_sapi_name() ) {
+			// apcu_sma_info() triggers a warning when APCu is disabled
+			// @codingStandardsIgnoreStart
+			if ( ! function_exists( 'apcu_sma_info' ) ) {
+				$missing['apcu-installed'] = 'APCu extension installed';
+			} elseif ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+				$missing['apcu-enabled'] = 'APCu extension enabled';
+			}
+			// @codingStandardsIgnoreEnd
 		}
-		// @codingStandardsIgnoreEnd
 		if ( -1 === version_compare( PHP_VERSION, '5.6' ) ) {
 			$missing['php'] = 'PHP 5.6 or greater';
 		}
