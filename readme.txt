@@ -3,7 +3,7 @@ Contributors: getpantheon, danielbachhuber, stevector
 Tags: cache, plugin
 Requires at least: 4.3
 Tested up to: 4.7.4
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -111,6 +111,12 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
 
 == Changelog ==
+
+= 0.5.2 (May 3rd, 2017) =
+* Normalizes address key to comply with DB column length.
+* Always runs database table initialization on the `enable` CLI command.
+* Doesn't require APCu to be enabled in CLI.
+* Test improvements.
 
 = 0.5.1 (April 25th, 2017) =
 * Uses the correct DSN format in all DB_HOST scenarios.
