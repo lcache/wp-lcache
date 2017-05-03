@@ -4,8 +4,9 @@
 # Execute the Behat test suite against a prepared Pantheon site environment.
 ###
 
-terminus whoami > /dev/null
-if [ $? -ne 0 ]; then
+# Check if logged into Terminus
+TERMINUS_USER_ID=$(terminus auth:whoami --field=id 2>&1)
+if [[ ! $TERMINUS_USER_ID =~ ^[A-Za-z0-9-]{36}$ ]]; then
 	echo "Terminus unauthenticated; assuming unauthenticated build"
 	exit 0
 fi
