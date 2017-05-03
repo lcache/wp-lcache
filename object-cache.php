@@ -976,7 +976,8 @@ class WP_Object_Cache {
 			} else {
 				$safe_group = null;
 			}
-			$address = new Address( $safe_group, $arguments[0][0] );
+			$key = self::normalize_address_key( $safe_group, $arguments[0][0] );
+			$address = new Address( $safe_group, $key );
 			// Some LCache methods don't exist directly, so we need to mock them
 			switch ( $method ) {
 				case 'incr':
@@ -1027,6 +1028,35 @@ class WP_Object_Cache {
 				return null;
 		}
 
+	}
+
+	/**
+	 * Normalizes an address key to comply with the DB column length
+	 *
+	 * @param string $group
+	 * @param string $key
+	 * @return string
+	 */
+	public static function normalize_address_key( $group, $key ) {
+		$is_ascii = mb_check_encoding( $key, 'ASCII' );
+
+		// 251 represents the max length of the address column (VARCHAR 255),
+		// minus a buffer of 4 chars that are added by `Address::serialize()`
+		// xx:{group}:{key}
+		$key_max_length = 251 - strlen( $group );
+
+		if ( $is_ascii && strlen( $key ) <= $key_max_length ) {
+			return $key;
+		}
+
+		$hash = hash( 'sha256', $key ); // 64 chars
+
+		if ( ! $is_ascii ) {
+			return $hash;
+		}
+
+		// Return with as much of the original key as possible then append the hash
+		return substr( $key, 0, $key_max_length - strlen( $hash ) ) . $hash;
 	}
 
 	/**
@@ -1115,14 +1145,17 @@ class WP_Object_Cache {
 		if ( ! class_exists( '\LCache\NullL1' ) ) {
 			$missing['lcache'] = 'LCache library';
 		}
-		// apcu_sma_info() triggers a warning when APCu is disabled
-		// @codingStandardsIgnoreStart
-		if ( ! function_exists( 'apcu_sma_info' ) ) {
-			$missing['apcu-installed'] = 'APCu extension installed';
-		} elseif ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
-			$missing['apcu-enabled'] = 'APCu extension enabled';
+
+		if ( 'cli' !== php_sapi_name() ) {
+			// apcu_sma_info() triggers a warning when APCu is disabled
+			// @codingStandardsIgnoreStart
+			if ( ! function_exists( 'apcu_sma_info' ) ) {
+				$missing['apcu-installed'] = 'APCu extension installed';
+			} elseif ( function_exists( 'apcu_sma_info' ) && ! @apcu_sma_info() ) {
+				$missing['apcu-enabled'] = 'APCu extension enabled';
+			}
+			// @codingStandardsIgnoreEnd
 		}
-		// @codingStandardsIgnoreEnd
 		if ( -1 === version_compare( PHP_VERSION, '5.6' ) ) {
 			$missing['php'] = 'PHP 5.6 or greater';
 		}
