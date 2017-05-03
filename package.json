@@ -1,15 +1,44 @@
 {
   "name": "wp-lcache",
-  "version": "0.0.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pantheon-systems/wp-lcache.git"
-  },
+  "title": "WP LCache",
+  "description": "Supercharge your WP Object Cache with LCache, a persistent, performant, and multi-layer cache library.",
+  "version": "0.5.1",
+  "license": "GPL-2.0",
+  "author": "Pantheon",
+  "homepage": "https://wordpress.org/plugins/wp-lcache/",
   "main": "Gruntfile.js",
-  "author": "Pantheon <noreply@pantheon.io>",
+  "contributors": [
+    "Daniel Bachhuber <daniel@handbuilt.co> (https://handbuilt.co)"
+  ],
+  "repository": "lcache/wp-lcache",
+  "bugs": {
+    "url": "https://github.com/lcache/wp-lcache/issues"
+  },
+  "engines": {
+    "php": ">= 5.6",
+    "wordpress": ">= 4.3"
+  },
+  "badges": [
+    "[![Travis CI](https://travis-ci.org/<%= pkg.repository %>.svg?branch=master)](https://travis-ci.org/<%= pkg.repository %>)",
+    "[![CircleCI](https://circleci.com/gh/<%= pkg.repository %>/tree/master.svg?style=shield)](https://circleci.com/gh/<%= pkg.repository %>/tree/master/)",
+    "[![devDependencies Status](https://david-dm.org/<%= pkg.repository %>/master/dev-status.svg)](https://david-dm.org/<%= pkg.repository %>/master?type=dev)",
+    "[![License](https://img.shields.io/badge/license-GPL--2.0-brightgreen.svg)](https://github.com/<%= pkg.repository %>/blob/master/license.txt)",
+    "[![PHP <%= pkg.engines.php %>](https://img.shields.io/badge/php-<% print(encodeURI(pkg.engines.php)) %>-8892bf.svg)](https://secure.php.net/supported-versions.php)",
+    "[![WordPress <%= pkg.engines.wordpress %>](https://img.shields.io/badge/wordpress-<% print(encodeURI(pkg.engines.wordpress)) %>-blue.svg)](https://wordpress.org/download/release-archive/)"
+  ],
   "devDependencies": {
-    "grunt": "^0.4.5",
+    "grunt": "^1.0.1",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-dev-update": "^2.2.0",
     "grunt-phpcs": "^0.4.0",
-    "grunt-wp-readme-to-markdown": "~1.0.0"
+    "grunt-text-replace": "^0.4.0",
+    "grunt-wp-deploy": "^1.2.1",
+    "grunt-wp-readme-to-markdown": "^2.0.1",
+    "matchdep": "^1.0.1"
+  },
+  "scripts": {
+    "version": "grunt version && git add -A .",
+    "postversion": "git push && git push --tags"
   }
 }

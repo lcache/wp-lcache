@@ -1,5 +1,7 @@
 *.zip
 .DS_Store
+svn-username
+build/
 node_modules/
 vendor/
 pantheon-wordpress-upstream-master
