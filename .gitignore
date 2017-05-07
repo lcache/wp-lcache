@@ -1,5 +1,6 @@
 *.zip
 .DS_Store
+Thumbs.db
 node_modules/
 vendor/
 pantheon-wordpress-upstream-master
