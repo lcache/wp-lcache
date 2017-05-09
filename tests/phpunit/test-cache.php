@@ -45,23 +45,27 @@ class CacheTest extends WP_UnitTestCase {
 	}
 
 	public function test_pdo_dsn() {
-		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost', 'wordpress_test', 'utf8' ) );
-		$this->assertEquals( 'mysql:host=127.0.0.1;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( '127.0.0.1', 'wordpress_test', 'utf8' ) );
-		$this->assertEquals( 'mysql:host=db.www.example.com;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'db.www.example.com', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( 'localhost', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=127.0.0.1;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( '127.0.0.1', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=db.www.example.com;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( 'db.www.example.com', 'wordpress_test', 'utf8' ) );
 		// Invalid port numbers
-		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:foo', 'wordpress_test', 'utf8' ) );
-		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:0', 'wordpress_test', 'utf8' ) );
-		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:77777', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( 'localhost:foo', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( 'localhost:0', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( 'localhost:77777', 'wordpress_test', 'utf8' ) );
+		// Non-UTF-8 charsets
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=latin1', WP_Object_Cache::get_pdo_dsn( 'localhost', 'wordpress_test', 'latin1' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf16', WP_Object_Cache::get_pdo_dsn( 'localhost', 'wordpress_test', 'utf16' ) );
+		$this->assertEquals( 'mysql:host=localhost;dbname=wordpress_test;charset=utf32', WP_Object_Cache::get_pdo_dsn( 'localhost', 'wordpress_test', 'utf32' ) );
 	}
 
 	public function test_pdo_dsn_with_port() {
-		$this->assertEquals( 'mysql:host=localhost;port=3306;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'localhost:3306', 'wordpress_test', 'utf8' ) );
-		$this->assertEquals( 'mysql:host=127.0.0.1;port=3306;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( '127.0.0.1:3306', 'wordpress_test', 'utf8' ) );
-		$this->assertEquals( 'mysql:host=db.www.example.com;port=3306;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( 'db.www.example.com:3306', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=localhost;port=3306;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( 'localhost:3306', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=127.0.0.1;port=3306;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( '127.0.0.1:3306', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:host=db.www.example.com;port=3306;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( 'db.www.example.com:3306', 'wordpress_test', 'utf8' ) );
 	}
 
 	public function test_pdo_dsn_with_socket() {
-		$this->assertEquals( 'mysql:unix_socket=/var/lib/mysql/mysql.sock;dbname=wordpress_test;charset=utf8', WP_Object_Cache::get_pdo_dsn( '/var/lib/mysql/mysql.sock', 'wordpress_test', 'utf8' ) );
+		$this->assertEquals( 'mysql:unix_socket=/var/lib/mysql/mysql.sock;dbname=wordpress_test;charset=utf8mb4', WP_Object_Cache::get_pdo_dsn( '/var/lib/mysql/mysql.sock', 'wordpress_test', 'utf8' ) );
 	}
 
 	public function test_normalize_address_key() {
