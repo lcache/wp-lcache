@@ -1002,7 +1002,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->altered_value_column = true;
 		$ret = $wpdb->get_results( "SHOW CREATE TABLE `{$table_prefix}lcache_events`" );
 		// @codingStandardsIgnoreEnd
-		$this->assertContains( '`value` varchar(2) DEFAULT NULL,', $ret[0]->{'Create Table'} );
+		$this->assertContains( '`value` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,', $ret[0]->{'Create Table'} );
 		$this->cache->set( 'foo', 'basjkfsdfsdksd' );
 	}
 
