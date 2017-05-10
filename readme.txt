@@ -1,17 +1,15 @@
 === WP LCache ===
 Contributors: getpantheon, danielbachhuber, stevector
-Tags: cache, plugin
+Tags: apc, apcu, cache, caching, lcache, object-cache, performance
 Requires at least: 4.3
-Tested up to: 4.7.4
+Tested up to: 4.7
 Stable tag: 0.5.2
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+License: GPL-2.0
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Supercharge your WP Object Cache with LCache, a persistent, performant, and multi-layer cache library.
 
 == Description ==
-
-[![Travis CI](https://travis-ci.org/lcache/wp-lcache.svg?branch=master)](https://travis-ci.org/lcache/wp-lcache) [![CircleCI](https://circleci.com/gh/lcache/wp-lcache/tree/master.svg?style=svg)](https://circleci.com/gh/lcache/wp-lcache/tree/master)
 
 For sites concerned with high traffic, speed for logged-in users, or dynamic pageloads, a high-speed and persistent object cache is a must. WP LCache improves upon Memcached and Redis object cache implementations by using APCu, PHP's in-memory cache, in a way that's compatible with multiple web nodes. Under the hood, WP LCache uses [LCache](https://github.com/lcache/lcache), a library that applies the tiered caching model of multi-core processors (with local L1 and central L2 caches) to web applications.
 
