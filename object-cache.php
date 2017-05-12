@@ -1068,6 +1068,8 @@ class WP_Object_Cache {
 	 * @return string
 	 */
 	public static function get_pdo_dsn( $host, $name, $charset ) {
+		$charset = ( 'utf8' === $charset ) ? 'utf8mb4' : $charset;
+
 		if ( '.sock' === substr( $host, -5 ) ) {
 			return sprintf( 'mysql:unix_socket=%s;dbname=%s;charset=%s', $host, $name, $charset );
 		}

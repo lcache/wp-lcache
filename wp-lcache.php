@@ -34,8 +34,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 function wp_lcache_initialize_database_schema() {
 	global $wpdb;
 
-	$events_table = $GLOBALS['table_prefix'] . 'lcache_events';
+	$charset_collate = $wpdb->get_charset_collate();
+
 	// @codingStandardsIgnoreStart
+	$events_table = $GLOBALS['table_prefix'] . 'lcache_events';
 	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$events_table}` (
 		`event_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		`pool` varchar(255) NOT NULL DEFAULT '' COMMENT 'PHP process pool that wrote the change.',
@@ -47,15 +49,15 @@ function wp_lcache_initialize_database_schema() {
 		UNIQUE KEY `event_id` (`event_id`),
 		KEY `expiration` (`expiration`),
 		KEY `lookup_miss` (`address`,`event_id`)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
+		) {$charset_collate};" );
 
 	$tags_table = $GLOBALS['table_prefix'] . 'lcache_tags';
 	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$tags_table}` (
-		`tag` varchar(255) NOT NULL DEFAULT '',
-		`address` varchar(255) NOT NULL DEFAULT '',
+		`tag` varchar(191) NOT NULL DEFAULT '',
+		`address` varchar(191) NOT NULL DEFAULT '',
 		PRIMARY KEY (`tag`,`address`),
 		KEY `rewritten_entry` (`address`)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
+		) {$charset_collate};" );
 	// @codingStandardsIgnoreEnd
 }
 
