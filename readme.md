@@ -2,7 +2,7 @@
 **Contributors:** [getpantheon](https://profiles.wordpress.org/getpantheon), [danielbachhuber](https://profiles.wordpress.org/danielbachhuber), [stevector](https://profiles.wordpress.org/stevector)  
 **Tags:** [apc](https://wordpress.org/plugins/tags/apc/), [apcu](https://wordpress.org/plugins/tags/apcu/), [cache](https://wordpress.org/plugins/tags/cache/), [caching](https://wordpress.org/plugins/tags/caching/), [lcache](https://wordpress.org/plugins/tags/lcache/), [object-cache](https://wordpress.org/plugins/tags/object-cache/), [performance](https://wordpress.org/plugins/tags/performance/)  
 **Requires at least:** 4.3  
-**Tested up to:** 4.7  
+**Tested up to:** 4.8  
 **Stable tag:** 0.5.2  
 **License:** GPL-2.0  
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html  
