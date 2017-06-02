@@ -41,6 +41,17 @@ If you'd like to do some benchmarking yourself, we'd love to hear about your tes
 
 APCu is persistent through the life of a PHP-FPM process. However, unlike Redis, APCu doesn't save its state to disk at shutdown. When PHP-FPM is restarted, WP LCache will repopulate the L1 cache (APCu) from the L2 cache (database).
 
+### Why am I seeing heavy database load from WP LCache? ###
+
+When you first enable WP LCache, you'll have a good amount of database activity as it writes all cache entries to the database. Eventually, as long as your codebase is optimized, database activity will die down and most activity will be in APCu.
+
+However, if your codebase isn't optimized, you'll see continued database load. Some common issues include:
+
+* Frequent calls to `wp_cache_flush()`, which empties the entire cache and requires the L2 to be completely repopulated.
+* Redundant or duplicative calls to `wp_cache_set()`, where code paths hardly ever use the cache values they set.
+
+In both of these cases, any persistent object cache drop-in probably isn't going to be useful until you solve your code problems.
+
 ## Installation ##
 
 **WP LCache requires PHP 5.6 or greater with the APCu extension enabled.**
