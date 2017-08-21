@@ -35,6 +35,13 @@ function wp_lcache_initialize_database_schema() {
 	global $wpdb;
 
 	$charset_collate = $wpdb->get_charset_collate();
+	// Barracuda needs ROW_FORMAT=DYNAMIC when using utf8mb4
+	if ( false !== stripos( $charset_collate, 'utf8mb4' ) ) {
+		$innodb_file_format = $wpdb->get_var( 'SELECT @@innodb_file_format' );
+		if ( false !== stripos( $innodb_file_format, 'Barracuda' ) ) {
+			$charset_collate .= ' ROW_FORMAT=DYNAMIC';
+		}
+	}
 
 	// @codingStandardsIgnoreStart
 	$events_table = $GLOBALS['table_prefix'] . 'lcache_events';
