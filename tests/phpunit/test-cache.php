@@ -943,7 +943,8 @@ class CacheTest extends WP_UnitTestCase {
 
 		// Create a new integrated cache
 		$second_pool = 'second_pool';
-		$l1 = new \LCache\NullL1( $second_pool );
+		$l1_factory = new LCache\L1CacheFactory;
+		$l1 = $l1_factory->create( 'Null', $second_pool );
 
 		// L2 isn't available as a public resource, so we need to recreate
 		$dsn = WP_Object_Cache::get_pdo_dsn( DB_HOST, DB_NAME, DB_CHARSET );

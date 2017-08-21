@@ -55,7 +55,6 @@ cd $BASH_DIR/..
 rsync -av --exclude='node_modules/' --exclude='tests/' ./* $PREPARE_DIR/wp-content/plugins/wp-lcache
 rm -rf $PREPARE_DIR/wp-content/plugins/wp-lcache/.git
 cd $PREPARE_DIR/wp-content
-ln -s plugins/wp-lcache/object-cache.php object-cache.php
 
 ###
 # Add the debugging plugin to the environment
@@ -82,3 +81,9 @@ git push
 } &> /dev/null
 terminus wp $SITE_ENV -- cache flush
 terminus wp $SITE_ENV -- plugin activate wp-lcache
+
+###
+# Create the Windows-style symlink and database tables
+###
+terminus connection:set $SITE_ENV sftp
+terminus wp $SITE_ENV -- lcache enable
