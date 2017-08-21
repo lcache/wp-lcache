@@ -18,6 +18,8 @@ fi
 
 set -ex
 
+exit 0
+
 ###
 # Delete the environment used for this test run.
 ###
