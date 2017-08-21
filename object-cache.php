@@ -1177,10 +1177,11 @@ class WP_Object_Cache {
 
 		$this->missing_requirements = self::check_missing_lcache_requirements();
 		if ( empty( $this->missing_requirements ) ) {
-			$l1 = new NullL1();
+			$l1_factory = new LCache\L1CacheFactory;
+			$l1 = $l1_factory->create( 'Null' );
 			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
-				$l1 = new APCuL1();
+				$l1 = $l1_factory->create( 'APCu' );
 			}
 
 			if ( defined( 'WP_LCACHE_RUNNING_TESTS' ) && WP_LCACHE_RUNNING_TESTS ) {
