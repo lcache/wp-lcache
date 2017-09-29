@@ -117,6 +117,13 @@ class CacheTest extends WP_UnitTestCase {
 		$this->assertEquals( 255, strlen( $ascii_over_max_address->serialize() ) );
 	}
 
+	public function test_save_emoji_to_cache() {
+		$this->cache->set( 'foo', '❤️' );
+		// Re-initialize the cache.
+		$this->cache =& $this->init_cache();
+		$this->assertEquals( '❤️', $this->cache->get( 'foo' ) );
+	}
+
 	public function test_loaded() {
 		$this->assertTrue( WP_LCACHE_OBJECT_CACHE );
 	}
@@ -1003,7 +1010,7 @@ class CacheTest extends WP_UnitTestCase {
 		$this->altered_value_column = true;
 		$ret = $wpdb->get_results( "SHOW CREATE TABLE `{$table_prefix}lcache_events`" );
 		// @codingStandardsIgnoreEnd
-		$this->assertContains( '`value` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,', $ret[0]->{'Create Table'} );
+		$this->assertContains( '`value` varchar(2) DEFAULT NULL,', $ret[0]->{'Create Table'} );
 		$this->cache->set( 'foo', 'basjkfsdfsdksd' );
 	}
 
