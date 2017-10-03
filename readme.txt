@@ -3,7 +3,7 @@ Contributors: getpantheon, danielbachhuber, stevector
 Tags: apc, apcu, cache, caching, lcache, object-cache, performance
 Requires at least: 4.3
 Tested up to: 4.8
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPL-2.0
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -120,6 +120,9 @@ Behat requires a Pantheon site. Once you've created the site, you'll need [insta
 Existing WP LCache users will need to alter the `value` column on the lcache_event table from `BLOB` to `LONGBLOB`.
 
 == Changelog ==
+
+= 0.6.1 (October 3rd, 2017) =
+* Switches back to `utf8` for LCache tables [[#149](https://github.com/lcache/wp-lcache/pull/149)].
 
 = 0.6.0 (August 28th, 2017) =
 * Supports `utf8mb4` as a database charset [[#131](https://github.com/lcache/wp-lcache/pull/131),[#143](https://github.com/lcache/wp-lcache/pull/143)].
