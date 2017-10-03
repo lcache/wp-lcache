@@ -3,7 +3,7 @@
  * Plugin Name: WP LCache
  * Plugin URI: https://github.com/pantheon-systems/wp-lcache/
  * Description: Supercharge your WP Object Cache with LCache, a persistent, performant, and multi-layer cache library.
- * Version: 0.6.0
+ * Version: 0.6.1-alpha
  * Author: Pantheon, Daniel Bachhuber
  * Author URI: https://pantheon.io/
  * License: GPL-2.0
@@ -34,15 +34,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 function wp_lcache_initialize_database_schema() {
 	global $wpdb;
 
-	$charset_collate = $wpdb->get_charset_collate();
-	// Barracuda needs ROW_FORMAT=DYNAMIC when using utf8mb4
-	if ( false !== stripos( $charset_collate, 'utf8mb4' ) ) {
-		$innodb_file_format = $wpdb->get_var( 'SELECT @@innodb_file_format' );
-		if ( false !== stripos( $innodb_file_format, 'Barracuda' ) ) {
-			$charset_collate .= ' ROW_FORMAT=DYNAMIC';
-		}
-	}
-
 	// @codingStandardsIgnoreStart
 	$events_table = $GLOBALS['table_prefix'] . 'lcache_events';
 	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$events_table}` (
@@ -56,15 +47,15 @@ function wp_lcache_initialize_database_schema() {
 		UNIQUE KEY `event_id` (`event_id`),
 		KEY `expiration` (`expiration`),
 		KEY `lookup_miss` (`address`,`event_id`)
-		) {$charset_collate};" );
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 
 	$tags_table = $GLOBALS['table_prefix'] . 'lcache_tags';
 	$wpdb->query( "CREATE TABLE IF NOT EXISTS `{$tags_table}` (
-		`tag` varchar(191) NOT NULL DEFAULT '',
-		`address` varchar(191) NOT NULL DEFAULT '',
+		`tag` varchar(255) NOT NULL DEFAULT '',
+		`address` varchar(255) NOT NULL DEFAULT '',
 		PRIMARY KEY (`tag`,`address`),
 		KEY `rewritten_entry` (`address`)
-		) {$charset_collate};" );
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;" );
 	// @codingStandardsIgnoreEnd
 }
 
