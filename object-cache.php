@@ -131,7 +131,7 @@ function wp_cache_flush() {
  * @param bool $force Whether to force an update of the local cache from the persistent cache (default is false)
  * @param &bool $found Whether key was found in the cache. Disambiguates a return of false, a storable value.
  * @return bool|mixed False on failure to retrieve contents or the cache
- *		contents on success
+ *      contents on success
  */
 function wp_cache_get( $key, $group = '', $force = false, &$found = null ) {
 	global $wp_object_cache;
@@ -356,7 +356,7 @@ class WP_Object_Cache {
 	 *
 	 * @uses WP_Object_Cache::_exists Checks to see if the cache already has data.
 	 * @uses WP_Object_Cache::set Sets the data after the checking the cache
-	 *		contents existence.
+	 *      contents existence.
 	 *
 	 * @param int|string $key What to call the contents in the cache
 	 * @param mixed $data The contents to store in the cache
@@ -389,7 +389,7 @@ class WP_Object_Cache {
 	public function add_global_groups( $groups ) {
 		$groups = (array) $groups;
 
-		$groups = array_fill_keys( $groups, true );
+		$groups              = array_fill_keys( $groups, true );
 		$this->global_groups = array_merge( $this->global_groups, $groups );
 	}
 
@@ -401,7 +401,7 @@ class WP_Object_Cache {
 	public function add_non_persistent_groups( $groups ) {
 		$groups = (array) $groups;
 
-		$groups = array_fill_keys( $groups, true );
+		$groups                      = array_fill_keys( $groups, true );
 		$this->non_persistent_groups = array_merge( $this->non_persistent_groups, $groups );
 	}
 
@@ -459,7 +459,7 @@ class WP_Object_Cache {
 	 * @param int|string $key What the contents in the cache are called
 	 * @param string $group Where the cache contents are grouped
 	 * @param bool $force Optional. Whether to force the unsetting of the cache
-	 *		key in the group
+	 *      key in the group
 	 * @return bool False if the contents weren't deleted and true on success
 	 */
 	public function delete( $key, $group = 'default', $force = false ) {
@@ -540,7 +540,7 @@ class WP_Object_Cache {
 	 * @param string $force Whether to force a refetch rather than relying on the local cache (default is false)
 	 * @param bool $found Optional. Whether the key was found in the cache. Disambiguates a return of false, a storable value. Passed by reference. Default null.
 	 * @return bool|mixed False on failure to retrieve contents or the cache
-	 *		contents on success
+	 *      contents on success
 	 */
 	public function get( $key, $group = 'default', $force = false, &$found = null ) {
 
@@ -555,7 +555,7 @@ class WP_Object_Cache {
 		// Key is set internally, so we can use this value
 		if ( $this->isset_internal( $key, $group ) && ! $force ) {
 			$this->cache_hits += 1;
-			$found = true;
+			$found             = true;
 			return $this->get_internal( $key, $group );
 		}
 
@@ -563,7 +563,7 @@ class WP_Object_Cache {
 		// internally
 		if ( ! $this->should_persist( $group ) ) {
 			$this->cache_misses += 1;
-			$found = false;
+			$found               = false;
 			return false;
 		}
 
@@ -572,7 +572,7 @@ class WP_Object_Cache {
 		// LCache returns `null` when the key doesn't exist
 		if ( null === $value ) {
 			$this->cache_misses += 1;
-			$found = false;
+			$found               = false;
 			return false;
 		}
 
@@ -583,7 +583,7 @@ class WP_Object_Cache {
 
 		$this->set_internal( $key, $group, $value );
 		$this->cache_hits += 1;
-		$found = true;
+		$found             = true;
 		return $value;
 	}
 
@@ -719,7 +719,7 @@ class WP_Object_Cache {
 	 * @return array
 	 */
 	protected function get_alloptions( $force = false, &$found = null ) {
-		$keys = $this->get( 'keys', 'lcache_alloptions_keys', $force );
+		$keys  = $this->get( 'keys', 'lcache_alloptions_keys', $force );
 		$value = array();
 		if ( empty( $keys ) || ! is_array( $keys ) ) {
 			$found = false;
@@ -741,7 +741,7 @@ class WP_Object_Cache {
 	 */
 	protected function set_alloptions( $data, $expire = 0 ) {
 		$existing = $this->get_alloptions();
-		$keys = $this->get( 'keys', 'lcache_alloptions_keys' );
+		$keys     = $this->get( 'keys', 'lcache_alloptions_keys' );
 		if ( empty( $keys ) || ! is_array( $keys ) ) {
 			$keys = array();
 		}
@@ -779,7 +779,7 @@ class WP_Object_Cache {
 	 * Delete combined alloptions from separate cache keys and values.
 	 *
 	 * @param bool $force Optional. Whether to force the unsetting of the cache
-	 *		key in the group
+	 *      key in the group
 	 * @return boolean
 	 */
 	protected function delete_alloptions( $force = false ) {
@@ -803,7 +803,7 @@ class WP_Object_Cache {
 		foreach ( $this->lcache_calls as $method => $calls ) {
 			$total_lcache_calls += $calls;
 		}
-		$out = array();
+		$out   = array();
 		$out[] = '<p>';
 		$out[] = '<strong>Cache Hits:</strong>' . (int) $this->cache_hits . '<br />';
 		$out[] = '<strong>Cache Misses:</strong>' . (int) $this->cache_misses . '<br />';
@@ -830,7 +830,7 @@ class WP_Object_Cache {
 	 * @param int $blog_id Blog ID
 	 */
 	public function switch_to_blog( $blog_id ) {
-		$blog_id = (int) $blog_id;
+		$blog_id           = (int) $blog_id;
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 	}
 
@@ -894,7 +894,7 @@ class WP_Object_Cache {
 		if ( is_null( $value ) ) {
 			$value = '';
 		}
-		$group = $this->multisite_safe_group( $group );
+		$group                         = $this->multisite_safe_group( $group );
 		$this->cache[ $group ][ $key ] = $value;
 	}
 
@@ -972,11 +972,11 @@ class WP_Object_Cache {
 			$this->lcache_calls[ $method ]++;
 			if ( ! is_null( $arguments[0][1] ) ) {
 				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
-				$safe_group = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . $multisite_safe_group );
+				$safe_group           = preg_replace( '/\s+/', '', WP_CACHE_KEY_SALT . $multisite_safe_group );
 			} else {
 				$safe_group = null;
 			}
-			$key = self::normalize_address_key( $safe_group, $arguments[0][0] );
+			$key     = self::normalize_address_key( $safe_group, $arguments[0][0] );
 			$address = new Address( $safe_group, $key );
 			// Some LCache methods don't exist directly, so we need to mock them
 			switch ( $method ) {
@@ -1009,14 +1009,14 @@ class WP_Object_Cache {
 		switch ( $method ) {
 			case 'incr':
 				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
-				$val = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] + $arguments[1];
+				$val                  = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] + $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
 				return $val;
 			case 'decr':
 				$multisite_safe_group = $this->multisite_safe_group( $arguments[0][1] );
-				$val = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] - $arguments[1];
+				$val                  = $this->cache[ $multisite_safe_group ][ $arguments[0][0] ] - $arguments[1];
 				if ( $val < 0 ) {
 					$val = 0;
 				}
@@ -1172,13 +1172,13 @@ class WP_Object_Cache {
 	public function __construct() {
 		global $blog_id, $table_prefix;
 
-		$this->multisite = is_multisite();
+		$this->multisite   = is_multisite();
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 
 		$this->missing_requirements = self::check_missing_lcache_requirements();
 		if ( empty( $this->missing_requirements ) ) {
 			$l1_factory = new LCache\L1CacheFactory;
-			$l1 = $l1_factory->create( 'Null' );
+			$l1         = $l1_factory->create( 'Null' );
 			// APCu isn't available in CLI context unless explicitly enabled
 			if ( php_sapi_name() !== 'cli' || 'on' === ini_get( 'apc.enable_cli' ) ) {
 				$l1 = $l1_factory->create( 'APCu' );
@@ -1188,17 +1188,21 @@ class WP_Object_Cache {
 				wp_lcache_initialize_database_schema();
 			}
 
-			$dsn = self::get_pdo_dsn( DB_HOST, DB_NAME, DB_CHARSET );
-			$options = array( PDO::ATTR_TIMEOUT => 2, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"' );
-			$dbh = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
+			$dsn     = self::get_pdo_dsn( DB_HOST, DB_NAME, DB_CHARSET );
+			$options = array(
+				PDO::ATTR_TIMEOUT            => 2,
+				PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode="ANSI_QUOTES,STRICT_ALL_TABLES"',
+			);
+			$dbh     = new PDO( $dsn, DB_USER, DB_PASSWORD, $options );
 			$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-			$l2 = new DatabaseL2( $dbh, $GLOBALS['table_prefix'], true );
+			$l2           = new DatabaseL2( $dbh, $GLOBALS['table_prefix'], true );
 			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
 			// Assume LCache is failed if there are database errors
-			if ( $errors = $l2->getErrors() ) {
+			$errors = $l2->getErrors();
+			if ( $errors ) {
 				$this->missing_requirements['database-error'] = 'LCache database table';
-				$this->lcache = null;
+				$this->lcache                                 = null;
 			} elseif ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {
 				add_action( 'init', array( $this, 'wp_action_init_register_cron' ) );
 				add_action( 'wp_lcache_collect_garbage', array( $this, 'wp_action_wp_lcache_collect_garbage' ) );

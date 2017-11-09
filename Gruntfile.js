@@ -19,16 +19,6 @@ module.exports = function( grunt ) {
 			}
 		},
 
-		phpcs: {
-			options: {
-				bin: 'vendor/bin/phpcs --extensions=php --ignore="*/vendor/*,*/lib/*,*/node_modules/*"',
-				standard: 'phpcs.ruleset.xml'
-			},
-			main: {
-				src: '*.php'
-			}
-		},
-
 		wp_readme_to_markdown: {
 			options: {
 				post_convert: function( readme ) {
