@@ -1199,7 +1199,8 @@ class WP_Object_Cache {
 			$this->lcache = new Integrated( $l1, $l2 );
 			$this->lcache->synchronize();
 			// Assume LCache is failed if there are database errors
-			if ( $errors = $l2->getErrors() ) {
+			$errors = $l2->getErrors();
+			if ( $errors ) {
 				$this->missing_requirements['database-error'] = 'LCache database table';
 				$this->lcache                                 = null;
 			} elseif ( function_exists( 'add_action' ) && ! has_action( 'init', array( $this, 'wp_action_init_register_cron' ) ) ) {

@@ -11,14 +11,20 @@
 
 	<rule ref="WordPress-Core" />
 
-	<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
-	<exclude name="WordPress.DB.RestrictedClasses.mysql__PDO" />
 	<exclude name="WordPress.CSRF.NonceVerification" />
 	<exclude name="WordPress.WhiteSpace.ControlStructureSpacing" />
 	<exclude name="WordPress.NamingConventions.ValidVariableName" />
 	<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
 	<exclude name="WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize" />
 	<exclude name="Squiz.PHP.CommentedOutCode" />
+
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>*</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.DB.RestrictedClasses.mysql__PDO">
+		<exclude-pattern>*</exclude-pattern>
+	</rule>
 
 	<exclude-pattern>*/bin/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
