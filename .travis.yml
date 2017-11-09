@@ -51,7 +51,8 @@ before_script:
     - composer install
     - |
       if [[ "$WP_TRAVISCI" == "phpcs" ]] ; then
-        npm install
+        composer global require wp-coding-standards/wpcs
+        phpcs --config-set installed_paths $HOME/.composer/vendor/wp-coding-standards/wpcs
       fi
 
 script:
