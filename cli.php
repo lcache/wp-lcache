@@ -17,7 +17,7 @@ class WP_LCache_CLI {
 			WP_CLI::error( 'Unknown wp-content/object-cache.php already exists.' );
 		}
 		$object_cache = dirname( __FILE__ ) . '/object-cache.php';
-		$target = str_replace( WP_CONTENT_DIR, '', $object_cache );
+		$target       = str_replace( WP_CONTENT_DIR, '', $object_cache );
 		// @codingStandardsIgnoreStart
 		if ( self::make_stub( $target ) ) {
 			// @codingStandardsIgnoreEnd
@@ -51,7 +51,7 @@ EndPHPBlock;
 			fwrite( $fp, $stub );
 			// @codingStandardsIgnoreEnd
 			fclose( $fp );
-		} catch (Exception $e) {
+		} catch ( Exception $e ) {
 			// TODO: more granular exception handling?
 			return false;
 		}

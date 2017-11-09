@@ -62,5 +62,5 @@ script:
       fi
     - |
       if [[ "$WP_TRAVISCI" == "phpcs" ]] ; then
-        grunt phpcs
+        phpcs
       fi
