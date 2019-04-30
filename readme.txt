@@ -13,7 +13,7 @@ Supercharge your WP Object Cache with LCache, a persistent, performant, and mult
 
 For sites concerned with high traffic, speed for logged-in users, or dynamic pageloads, a high-speed and persistent object cache is a must. WP LCache improves upon Memcached and Redis object cache implementations by using APCu, PHP's in-memory cache, in a way that's compatible with multiple web nodes. Under the hood, WP LCache uses [LCache](https://github.com/lcache/lcache), a library that applies the tiered caching model of multi-core processors (with local L1 and central L2 caches) to web applications.
 
-**Note**: WP LCache development is currently on hold, and not recommendated for production use, due to an [issue with APCu cache fragmentation](https://github.com/lcache/wp-lcache/issues/138).
+**Note**: WP LCache development is currently on hold, and not recommendated for production use, due to an [issue with APCu cache fragmentation](https://github.com/lcache/wp-lcache/issues/138). [WP Redis](https://wordpress.org/plugins/wp-redis/), also maintained by Pantheon, is a great alternative.
 
 WP LCache is faster than other object cache implementations because:
 
